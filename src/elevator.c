@@ -6,6 +6,26 @@ static int Elevator_Abs(int value)
     return value < 0 ? -value : value;
 }
 
+static void Elevator_FinishStop(Elevator *elevator)
+{
+    Elevator_ClearRequest(elevator, elevator->currentFloor);
+    Elevator_OpenDoor(elevator);
+    Elevator_HoldDoor(elevator);
+    Elevator_CloseDoor(elevator);
+
+    elevator->targetFloor = NO_TARGET_FLOOR;
+
+    if (Elevator_HasAnyRequest(elevator))
+    {
+        elevator->state = ELEVATOR_IDLE;
+    }
+    else
+    {
+        elevator->state = ELEVATOR_IDLE;
+        elevator->direction = DIRECTION_NONE;
+    }
+}
+
 void Elevator_Init(Elevator *elevator)
 {
     int i;
@@ -273,19 +293,20 @@ void Elevator_RunOneStep(Elevator *elevator)
         return;
     }
 
+    if (Elevator_HasRequestAtFloor(elevator, elevator->currentFloor))
+    {
+        printf("[Arrive] Serving request at floor %d.\n", elevator->currentFloor);
+        Elevator_FinishStop(elevator);
+        return;
+    }
+
     elevator->targetFloor = Elevator_FindNextTarget(elevator);
     Elevator_UpdateDirection(elevator);
 
     if (elevator->targetFloor == elevator->currentFloor)
     {
         printf("[Arrive] Serving request at floor %d.\n", elevator->currentFloor);
-        Elevator_ClearRequest(elevator, elevator->currentFloor);
-        Elevator_OpenDoor(elevator);
-        Elevator_HoldDoor(elevator);
-        Elevator_CloseDoor(elevator);
-        elevator->targetFloor = NO_TARGET_FLOOR;
-        elevator->direction = DIRECTION_NONE;
-        elevator->state = Elevator_HasAnyRequest(elevator) ? ELEVATOR_IDLE : ELEVATOR_IDLE;
+        Elevator_FinishStop(elevator);
         return;
     }
 
@@ -294,11 +315,7 @@ void Elevator_RunOneStep(Elevator *elevator)
     if (elevator->currentFloor == elevator->targetFloor)
     {
         printf("[Arrive] Target floor %d reached.\n", elevator->currentFloor);
-        Elevator_ClearRequest(elevator, elevator->currentFloor);
-        Elevator_OpenDoor(elevator);
-        Elevator_HoldDoor(elevator);
-        Elevator_CloseDoor(elevator);
-        elevator->targetFloor = NO_TARGET_FLOOR;
+        Elevator_FinishStop(elevator);
     }
 }
 
