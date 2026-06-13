@@ -15,6 +15,12 @@ static void Elevator_FinishStop(Elevator *elevator)
 
     elevator->targetFloor = NO_TARGET_FLOOR;
 
+    if (elevator->door != DOOR_CLOSED)
+    {
+        elevator->direction = DIRECTION_NONE;
+        return;
+    }
+
     if (Elevator_HasAnyRequest(elevator))
     {
         elevator->state = ELEVATOR_IDLE;
@@ -41,6 +47,11 @@ void Elevator_Init(Elevator *elevator)
     elevator->state = ELEVATOR_IDLE;
     elevator->direction = DIRECTION_NONE;
     elevator->door = DOOR_CLOSED;
+    elevator->fault = FAULT_NONE;
+    elevator->currentLoadKg = 0;
+    elevator->isOverloaded = 0;
+    elevator->isDoorBlocked = 0;
+    elevator->isAdminPaused = 0;
 
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
@@ -251,6 +262,12 @@ void Elevator_MoveOneFloor(Elevator *elevator)
         return;
     }
 
+    if (!Elevator_CanMove(elevator))
+    {
+        printf("[Safety] Elevator cannot move now. Check safety status.\n");
+        return;
+    }
+
     Elevator_UpdateDirection(elevator);
 
     if (elevator->direction == DIRECTION_UP)
@@ -281,6 +298,12 @@ void Elevator_RunOneStep(Elevator *elevator)
 {
     if (elevator == NULL)
     {
+        return;
+    }
+
+    if (!Elevator_CanMove(elevator))
+    {
+        printf("[Safety] Normal scheduling is paused by safety status.\n");
         return;
     }
 
@@ -328,13 +351,31 @@ void Elevator_RunUntilIdle(Elevator *elevator)
 
     while (Elevator_HasAnyRequest(elevator))
     {
+        if (!Elevator_CanMove(elevator))
+        {
+            printf("[Safety] Run stopped before all requests finished.\n");
+            return;
+        }
+
         Elevator_RunOneStep(elevator);
     }
 
-    elevator->state = ELEVATOR_IDLE;
     elevator->direction = DIRECTION_NONE;
     elevator->targetFloor = NO_TARGET_FLOOR;
-    printf("[Done] All requests finished. Total time: %ds.\n", elevator->totalTimeSeconds);
+
+    if (elevator->door == DOOR_CLOSED &&
+        !elevator->isOverloaded &&
+        !elevator->isDoorBlocked &&
+        !elevator->isAdminPaused &&
+        elevator->fault == FAULT_NONE)
+    {
+        elevator->state = ELEVATOR_IDLE;
+        printf("[Done] All requests finished. Total time: %ds.\n", elevator->totalTimeSeconds);
+    }
+    else
+    {
+        printf("[Safety] Requests finished, but elevator is waiting for safety recovery.\n");
+    }
 }
 
 void Elevator_OpenDoor(Elevator *elevator)
@@ -375,6 +416,14 @@ void Elevator_CloseDoor(Elevator *elevator)
         return;
     }
 
+    if (!Elevator_CanCloseDoor(elevator))
+    {
+        printf("[Safety] Door closing blocked. Door will reopen and hold.\n");
+        Elevator_OpenDoor(elevator);
+        Elevator_HoldDoor(elevator);
+        return;
+    }
+
     elevator->state = ELEVATOR_DOOR_CLOSING;
     elevator->door = DOOR_CLOSED;
     elevator->totalTimeSeconds += DOOR_CLOSE_TIME;
@@ -400,6 +449,10 @@ void Elevator_PrintStatus(const Elevator *elevator)
     printf("State         : %s\n", Elevator_GetStateName(elevator->state));
     printf("Direction     : %s\n", Elevator_GetDirectionName(elevator->direction));
     printf("Door          : %s\n", Elevator_GetDoorName(elevator->door));
+    printf("Load          : %d/%d kg\n", elevator->currentLoadKg, MAX_LOAD_KG);
+    printf("Door blocked  : %s\n", elevator->isDoorBlocked ? "Yes" : "No");
+    printf("Admin paused  : %s\n", elevator->isAdminPaused ? "Yes" : "No");
+    printf("Fault         : %s\n", Elevator_GetFaultName(elevator->fault));
     printf("Total time    : %d seconds\n", elevator->totalTimeSeconds);
     Elevator_PrintRequests(elevator);
     printf("-----------------------\n\n");
@@ -447,6 +500,10 @@ const char *Elevator_GetStateName(ElevatorState state)
         return "Door holding";
     case ELEVATOR_DOOR_CLOSING:
         return "Door closing";
+    case ELEVATOR_FAULT:
+        return "Fault";
+    case ELEVATOR_PAUSED:
+        return "Paused";
     default:
         return "Unknown";
     }
@@ -464,6 +521,192 @@ const char *Elevator_GetDirectionName(ElevatorDirection direction)
         return "Down";
     default:
         return "Unknown";
+    }
+}
+
+int Elevator_CanMove(const Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    if (elevator->isAdminPaused)
+    {
+        return 0;
+    }
+
+    if (elevator->fault != FAULT_NONE)
+    {
+        return 0;
+    }
+
+    if (elevator->isOverloaded)
+    {
+        return 0;
+    }
+
+    if (elevator->door != DOOR_CLOSED)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+int Elevator_CanCloseDoor(const Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    if (elevator->isAdminPaused)
+    {
+        return 0;
+    }
+
+    if (elevator->fault != FAULT_NONE)
+    {
+        return 0;
+    }
+
+    if (elevator->isOverloaded)
+    {
+        return 0;
+    }
+
+    if (elevator->isDoorBlocked)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+void Elevator_SetLoad(Elevator *elevator, int loadKg)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    if (loadKg < 0)
+    {
+        loadKg = 0;
+    }
+
+    elevator->currentLoadKg = loadKg;
+    elevator->isOverloaded = loadKg > MAX_LOAD_KG;
+
+    if (elevator->isOverloaded)
+    {
+        elevator->door = DOOR_OPEN;
+        elevator->state = ELEVATOR_DOOR_HOLDING;
+        printf("[Safety] Overload: %d kg. Door stays open.\n", loadKg);
+    }
+    else
+    {
+        printf("[Safety] Load set to %d kg.\n", loadKg);
+        if (elevator->door == DOOR_OPEN && Elevator_CanCloseDoor(elevator))
+        {
+            Elevator_CloseDoor(elevator);
+            elevator->state = ELEVATOR_IDLE;
+        }
+    }
+}
+
+void Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->isDoorBlocked = isBlocked ? 1 : 0;
+    printf("[Safety] Door blocked: %s.\n", elevator->isDoorBlocked ? "yes" : "no");
+
+    if (!elevator->isDoorBlocked && elevator->door == DOOR_OPEN && Elevator_CanCloseDoor(elevator))
+    {
+        Elevator_CloseDoor(elevator);
+        elevator->state = ELEVATOR_IDLE;
+    }
+}
+
+void Elevator_SetFault(Elevator *elevator, FaultType fault)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->fault = fault;
+    if (fault == FAULT_NONE)
+    {
+        printf("[Fault] Fault cleared.\n");
+        if (!elevator->isAdminPaused)
+        {
+            elevator->state = ELEVATOR_IDLE;
+        }
+        return;
+    }
+
+    elevator->state = ELEVATOR_FAULT;
+    elevator->direction = DIRECTION_NONE;
+    elevator->targetFloor = NO_TARGET_FLOOR;
+    printf("[Fault] Elevator entered fault state: %s.\n", Elevator_GetFaultName(fault));
+}
+
+void Elevator_ClearFault(Elevator *elevator)
+{
+    Elevator_SetFault(elevator, FAULT_NONE);
+}
+
+void Elevator_AdminPause(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->isAdminPaused = 1;
+    elevator->state = ELEVATOR_PAUSED;
+    elevator->direction = DIRECTION_NONE;
+    elevator->targetFloor = NO_TARGET_FLOOR;
+    printf("[Admin] Elevator paused by administrator.\n");
+}
+
+void Elevator_AdminResume(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->isAdminPaused = 0;
+    if (elevator->fault == FAULT_NONE)
+    {
+        elevator->state = ELEVATOR_IDLE;
+    }
+    printf("[Admin] Elevator resumed by administrator.\n");
+}
+
+const char *Elevator_GetFaultName(FaultType fault)
+{
+    switch (fault)
+    {
+    case FAULT_NONE:
+        return "None";
+    case FAULT_DOOR:
+        return "Door fault";
+    case FAULT_MOTOR:
+        return "Motor fault";
+    case FAULT_SENSOR:
+        return "Sensor fault";
+    case FAULT_UNKNOWN:
+        return "Unknown fault";
+    default:
+        return "Invalid fault";
     }
 }
 

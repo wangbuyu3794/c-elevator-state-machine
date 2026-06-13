@@ -16,13 +16,17 @@
 #define DOOR_HOLD_TIME 5
 #define DOOR_CLOSE_TIME 2
 
+#define MAX_LOAD_KG 1000
+
 typedef enum
 {
     ELEVATOR_IDLE,
     ELEVATOR_MOVING,
     ELEVATOR_DOOR_OPENING,
     ELEVATOR_DOOR_HOLDING,
-    ELEVATOR_DOOR_CLOSING
+    ELEVATOR_DOOR_CLOSING,
+    ELEVATOR_FAULT,
+    ELEVATOR_PAUSED
 } ElevatorState;
 
 typedef enum
@@ -38,6 +42,15 @@ typedef enum
     DOOR_OPEN
 } DoorState;
 
+typedef enum
+{
+    FAULT_NONE,
+    FAULT_DOOR,
+    FAULT_MOTOR,
+    FAULT_SENSOR,
+    FAULT_UNKNOWN
+} FaultType;
+
 typedef struct
 {
     int currentFloor;
@@ -46,6 +59,12 @@ typedef struct
     ElevatorState state;
     ElevatorDirection direction;
     DoorState door;
+    FaultType fault;
+
+    int currentLoadKg;
+    int isOverloaded;
+    int isDoorBlocked;
+    int isAdminPaused;
 
     /*
      * Each array element stores whether a floor has a pending request.
@@ -75,11 +94,21 @@ void Elevator_OpenDoor(Elevator *elevator);
 void Elevator_HoldDoor(Elevator *elevator);
 void Elevator_CloseDoor(Elevator *elevator);
 
+int Elevator_CanMove(const Elevator *elevator);
+int Elevator_CanCloseDoor(const Elevator *elevator);
+void Elevator_SetLoad(Elevator *elevator, int loadKg);
+void Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked);
+void Elevator_SetFault(Elevator *elevator, FaultType fault);
+void Elevator_ClearFault(Elevator *elevator);
+void Elevator_AdminPause(Elevator *elevator);
+void Elevator_AdminResume(Elevator *elevator);
+
 void Elevator_PrintStatus(const Elevator *elevator);
 void Elevator_PrintRequests(const Elevator *elevator);
 
 const char *Elevator_GetStateName(ElevatorState state);
 const char *Elevator_GetDirectionName(ElevatorDirection direction);
 const char *Elevator_GetDoorName(DoorState door);
+const char *Elevator_GetFaultName(FaultType fault);
 
 #endif

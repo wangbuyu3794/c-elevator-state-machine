@@ -9,6 +9,12 @@ static void PrintMenu(void)
     printf("2. Run one step\n");
     printf("3. Run until idle\n");
     printf("4. Print status\n");
+    printf("5. Set load\n");
+    printf("6. Set door blocked\n");
+    printf("7. Set fault\n");
+    printf("8. Clear fault\n");
+    printf("9. Admin pause\n");
+    printf("10. Admin resume\n");
     printf("0. Exit\n");
     printf("Choose: ");
 }
@@ -18,6 +24,9 @@ int main(void)
     Elevator elevator;
     int choice;
     int floor;
+    int loadKg;
+    int isBlocked;
+    int faultChoice;
 
     Elevator_Init(&elevator);
     printf("Elevator initialized at floor %d.\n\n", elevator.currentFloor);
@@ -57,6 +66,59 @@ int main(void)
             break;
         case 4:
             Elevator_PrintStatus(&elevator);
+            break;
+        case 5:
+            printf("Enter current load in kg: ");
+            if (scanf("%d", &loadKg) != 1)
+            {
+                printf("Invalid load input. Program stopped.\n");
+                return 1;
+            }
+            Elevator_SetLoad(&elevator, loadKg);
+            break;
+        case 6:
+            printf("Door blocked? 1 = yes, 0 = no: ");
+            if (scanf("%d", &isBlocked) != 1)
+            {
+                printf("Invalid door blocked input. Program stopped.\n");
+                return 1;
+            }
+            Elevator_SetDoorBlocked(&elevator, isBlocked);
+            break;
+        case 7:
+            printf("Fault type: 1 = door, 2 = motor, 3 = sensor, 4 = unknown: ");
+            if (scanf("%d", &faultChoice) != 1)
+            {
+                printf("Invalid fault input. Program stopped.\n");
+                return 1;
+            }
+            switch (faultChoice)
+            {
+            case 1:
+                Elevator_SetFault(&elevator, FAULT_DOOR);
+                break;
+            case 2:
+                Elevator_SetFault(&elevator, FAULT_MOTOR);
+                break;
+            case 3:
+                Elevator_SetFault(&elevator, FAULT_SENSOR);
+                break;
+            case 4:
+                Elevator_SetFault(&elevator, FAULT_UNKNOWN);
+                break;
+            default:
+                printf("Unknown fault type.\n");
+                break;
+            }
+            break;
+        case 8:
+            Elevator_ClearFault(&elevator);
+            break;
+        case 9:
+            Elevator_AdminPause(&elevator);
+            break;
+        case 10:
+            Elevator_AdminResume(&elevator);
             break;
         default:
             printf("Unknown menu option.\n");
