@@ -820,6 +820,12 @@ void Elevator_RunRecovery(Elevator *elevator)
         return;
     }
 
+    if (!elevator->isRecovering && !elevator->isBetweenFloors)
+    {
+        printf("[Recovery] No recovery is needed now.\n");
+        return;
+    }
+
     elevator->isRecovering = 1;
     elevator->state = ELEVATOR_RECOVERING;
     elevator->direction = DIRECTION_NONE;
