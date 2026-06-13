@@ -78,6 +78,11 @@ typedef struct
      * 1 means requested, 0 means not requested.
      */
     int floorRequests[TOTAL_FLOOR_COUNT];
+    int requestCreatedAt[TOTAL_FLOOR_COUNT];
+
+    int completedRequestCount;
+    int totalWaitTimeSeconds;
+    int longestWaitTimeSeconds;
 } Elevator;
 
 void Elevator_Init(Elevator *elevator);
@@ -116,6 +121,7 @@ void Elevator_RunRecovery(Elevator *elevator);
 
 void Elevator_PrintStatus(const Elevator *elevator);
 void Elevator_PrintRequests(const Elevator *elevator);
+void Elevator_PrintStats(const Elevator *elevator);
 
 const char *Elevator_GetStateName(ElevatorState state);
 const char *Elevator_GetDirectionName(ElevatorDirection direction);

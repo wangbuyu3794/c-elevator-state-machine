@@ -6,6 +6,38 @@ static int Elevator_Abs(int value)
     return value < 0 ? -value : value;
 }
 
+static void Elevator_RecordCompletedRequest(Elevator *elevator, int floor)
+{
+    int index;
+    int waitTime;
+
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    index = Elevator_FloorToIndex(floor);
+    if (index < 0 || !elevator->floorRequests[index])
+    {
+        return;
+    }
+
+    waitTime = elevator->totalTimeSeconds - elevator->requestCreatedAt[index];
+    if (waitTime < 0)
+    {
+        waitTime = 0;
+    }
+
+    elevator->completedRequestCount++;
+    elevator->totalWaitTimeSeconds += waitTime;
+    if (waitTime > elevator->longestWaitTimeSeconds)
+    {
+        elevator->longestWaitTimeSeconds = waitTime;
+    }
+
+    printf("[Stats] Floor %d waited %d seconds before service.\n", floor, waitTime);
+}
+
 static void Elevator_UpdateSafetyState(Elevator *elevator)
 {
     if (elevator == NULL)
@@ -65,6 +97,7 @@ static void Elevator_UpdateSafetyState(Elevator *elevator)
 
 static void Elevator_FinishStop(Elevator *elevator)
 {
+    Elevator_RecordCompletedRequest(elevator, elevator->currentFloor);
     Elevator_ClearRequest(elevator, elevator->currentFloor);
     Elevator_OpenDoor(elevator);
     Elevator_HoldDoor(elevator);
@@ -117,7 +150,12 @@ void Elevator_Init(Elevator *elevator)
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
         elevator->floorRequests[i] = 0;
+        elevator->requestCreatedAt[i] = 0;
     }
+
+    elevator->completedRequestCount = 0;
+    elevator->totalWaitTimeSeconds = 0;
+    elevator->longestWaitTimeSeconds = 0;
 }
 
 int Elevator_IsValidFloor(int floor)
@@ -216,6 +254,7 @@ int Elevator_AddRequest(Elevator *elevator, int floor)
     }
 
     elevator->floorRequests[index] = 1;
+    elevator->requestCreatedAt[index] = elevator->totalTimeSeconds;
     printf("[Request] Added floor %d.\n", floor);
     return 1;
 }
@@ -236,6 +275,7 @@ int Elevator_ClearRequest(Elevator *elevator, int floor)
     }
 
     elevator->floorRequests[index] = 0;
+    elevator->requestCreatedAt[index] = 0;
     return 1;
 }
 
@@ -520,6 +560,7 @@ void Elevator_PrintStatus(const Elevator *elevator)
     printf("Fault         : %s\n", Elevator_GetFaultName(elevator->fault));
     printf("Total time    : %d seconds\n", elevator->totalTimeSeconds);
     Elevator_PrintRequests(elevator);
+    Elevator_PrintStats(elevator);
     printf("-----------------------\n\n");
 }
 
@@ -549,6 +590,29 @@ void Elevator_PrintRequests(const Elevator *elevator)
     }
 
     printf("\n");
+}
+
+void Elevator_PrintStats(const Elevator *elevator)
+{
+    double averageWait;
+
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    printf("Completed req : %d\n", elevator->completedRequestCount);
+    printf("Total wait    : %d seconds\n", elevator->totalWaitTimeSeconds);
+    printf("Longest wait  : %d seconds\n", elevator->longestWaitTimeSeconds);
+
+    if (elevator->completedRequestCount == 0)
+    {
+        printf("Average wait  : 0.00 seconds\n");
+        return;
+    }
+
+    averageWait = (double)elevator->totalWaitTimeSeconds / elevator->completedRequestCount;
+    printf("Average wait  : %.2f seconds\n", averageWait);
 }
 
 const char *Elevator_GetStateName(ElevatorState state)

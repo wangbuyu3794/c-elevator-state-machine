@@ -19,6 +19,7 @@ static void PrintMenu(void)
     printf("12. Restore power\n");
     printf("13. Simulate between floors\n");
     printf("14. Run recovery\n");
+    printf("15. Print statistics\n");
     printf("0. Exit\n");
     printf("Choose: ");
 }
@@ -142,6 +143,9 @@ int main(void)
             break;
         case 14:
             Elevator_RunRecovery(&elevator);
+            break;
+        case 15:
+            Elevator_PrintStats(&elevator);
             break;
         default:
             printf("Unknown menu option.\n");
