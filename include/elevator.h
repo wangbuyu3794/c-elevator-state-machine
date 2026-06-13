@@ -17,6 +17,7 @@
 #define DOOR_CLOSE_TIME 2
 
 #define MAX_LOAD_KG 1000
+#define RECOVERY_MOVE_TIME 5
 
 typedef enum
 {
@@ -26,7 +27,9 @@ typedef enum
     ELEVATOR_DOOR_HOLDING,
     ELEVATOR_DOOR_CLOSING,
     ELEVATOR_FAULT,
-    ELEVATOR_PAUSED
+    ELEVATOR_PAUSED,
+    ELEVATOR_POWER_OFF,
+    ELEVATOR_RECOVERING
 } ElevatorState;
 
 typedef enum
@@ -65,6 +68,10 @@ typedef struct
     int isOverloaded;
     int isDoorBlocked;
     int isAdminPaused;
+    int isPowerOff;
+    int isRecovering;
+    int isBetweenFloors;
+    int safeFloor;
 
     /*
      * Each array element stores whether a floor has a pending request.
@@ -102,6 +109,10 @@ void Elevator_SetFault(Elevator *elevator, FaultType fault);
 void Elevator_ClearFault(Elevator *elevator);
 void Elevator_AdminPause(Elevator *elevator);
 void Elevator_AdminResume(Elevator *elevator);
+void Elevator_PowerOff(Elevator *elevator);
+void Elevator_RestorePower(Elevator *elevator);
+void Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor);
+void Elevator_RunRecovery(Elevator *elevator);
 
 void Elevator_PrintStatus(const Elevator *elevator);
 void Elevator_PrintRequests(const Elevator *elevator);

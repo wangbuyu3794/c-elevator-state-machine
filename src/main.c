@@ -15,6 +15,10 @@ static void PrintMenu(void)
     printf("8. Clear fault\n");
     printf("9. Admin pause\n");
     printf("10. Admin resume\n");
+    printf("11. Power off\n");
+    printf("12. Restore power\n");
+    printf("13. Simulate between floors\n");
+    printf("14. Run recovery\n");
     printf("0. Exit\n");
     printf("Choose: ");
 }
@@ -27,6 +31,7 @@ int main(void)
     int loadKg;
     int isBlocked;
     int faultChoice;
+    int safeFloor;
 
     Elevator_Init(&elevator);
     printf("Elevator initialized at floor %d.\n\n", elevator.currentFloor);
@@ -119,6 +124,24 @@ int main(void)
             break;
         case 10:
             Elevator_AdminResume(&elevator);
+            break;
+        case 11:
+            Elevator_PowerOff(&elevator);
+            break;
+        case 12:
+            Elevator_RestorePower(&elevator);
+            break;
+        case 13:
+            printf("Enter nearest safe floor (-1 or 1-34): ");
+            if (scanf("%d", &safeFloor) != 1)
+            {
+                printf("Invalid safe floor input. Program stopped.\n");
+                return 1;
+            }
+            Elevator_SetBetweenFloors(&elevator, safeFloor);
+            break;
+        case 14:
+            Elevator_RunRecovery(&elevator);
             break;
         default:
             printf("Unknown menu option.\n");
