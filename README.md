@@ -535,7 +535,9 @@ V4.16 暂不实现：
 - 修复 `Elevator_RunUntilIdle` 在没有请求时可能覆盖安全状态的问题；
 - 如果停电、紧急呼叫、恢复中、门未锁定等安全状态仍然存在，运行到空闲不会强行改成 `Idle`；
 - 新增 `build.bat`，用于在 Windows 下快速编译项目；
-- 编译产物输出到 Windows 临时目录 `%TEMP%\c_elevator_state_machine.exe`，不会提交到 Git 仓库。
+- 新增 `run.bat`，用于在 Windows 下快速运行编译后的程序；
+- 编译产物输出到 Windows 临时目录，文件名形如 `%TEMP%\c_elevator_state_machine_12345.exe`，不会提交到 Git 仓库。
+- `run.bat` 会自动运行最近一次成功编译生成的程序。
 
 V4.17 暂不实现：
 
@@ -551,6 +553,8 @@ V4.17 暂不实现：
 build.bat
 ```
 
+双击 `build.bat` 也可以编译。脚本执行完成后会暂停，方便查看编译结果。
+
 如果想手动输入完整编译命令，也可以执行：
 
 ```cmd
@@ -559,8 +563,18 @@ gcc -Wall -Wextra -Iinclude src/main.c src/elevator.c src/elevator_request.c src
 
 ## 运行方式
 
+先完成编译，然后执行：
+
 ```cmd
-%TEMP%\c_elevator_state_machine.exe
+run.bat
+```
+
+双击 `run.bat` 也可以运行程序。
+
+如果想手动运行编译产物，可以查看 `build.bat` 输出的实际路径，或查看：
+
+```cmd
+type %TEMP%\c_elevator_state_machine_path.txt
 ```
 
 ## 菜单说明

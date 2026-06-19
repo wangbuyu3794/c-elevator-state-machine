@@ -1,7 +1,8 @@
 @echo off
 setlocal
 
-set OUTPUT=%TEMP%\c_elevator_state_machine.exe
+set OUTPUT=%TEMP%\c_elevator_state_machine_%RANDOM%.exe
+set OUTPUT_RECORD=%TEMP%\c_elevator_state_machine_path.txt
 
 gcc -Wall -Wextra -Iinclude ^
     src\main.c ^
@@ -16,7 +17,10 @@ gcc -Wall -Wextra -Iinclude ^
 
 if errorlevel 1 (
     echo Build failed.
+    pause
     exit /b 1
 )
 
+echo %OUTPUT%>"%OUTPUT_RECORD%"
 echo Build succeeded: %OUTPUT%
+pause
