@@ -18,6 +18,9 @@
 
 #define MAX_LOAD_KG 1000
 #define RECOVERY_MOVE_TIME 5
+#define LOBBY_FLOOR 1
+#define IDLE_RETURN_DELAY_SECONDS 60
+#define IDLE_STEP_SECONDS 10
 
 typedef enum
 {
@@ -59,6 +62,7 @@ typedef struct
     int currentFloor;
     int targetFloor;
     int totalTimeSeconds;
+    int idleTimeSeconds;
     ElevatorState state;
     ElevatorDirection direction;
     DoorState door;
@@ -101,6 +105,7 @@ typedef struct
     int currentFloor;
     int targetFloor;
     int totalTimeSeconds;
+    int idleTimeSeconds;
     ElevatorState state;
     ElevatorDirection direction;
     DoorState door;

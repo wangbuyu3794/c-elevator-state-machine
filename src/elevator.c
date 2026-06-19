@@ -194,6 +194,59 @@ static int Elevator_ClearServedRequestsAtCurrentFloor(Elevator *elevator)
     return cleared;
 }
 
+static void Elevator_ResetIdleTimer(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->idleTimeSeconds = 0;
+}
+
+static void Elevator_RunIdleStep(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->targetFloor = NO_TARGET_FLOOR;
+    elevator->direction = DIRECTION_NONE;
+    elevator->state = ELEVATOR_IDLE;
+    elevator->idleTimeSeconds += IDLE_STEP_SECONDS;
+    elevator->totalTimeSeconds += IDLE_STEP_SECONDS;
+
+    printf("[Idle] No pending requests. Idle time %ds/%ds.\n",
+           elevator->idleTimeSeconds,
+           IDLE_RETURN_DELAY_SECONDS);
+
+    if (elevator->currentFloor != LOBBY_FLOOR &&
+        elevator->idleTimeSeconds >= IDLE_RETURN_DELAY_SECONDS)
+    {
+        elevator->targetFloor = LOBBY_FLOOR;
+        Elevator_UpdateDirection(elevator);
+        printf("[Idle] Returning to lobby floor %d for standby.\n", LOBBY_FLOOR);
+
+        while (elevator->currentFloor != LOBBY_FLOOR)
+        {
+            if (!Elevator_CanMove(elevator))
+            {
+                printf("[Safety] Lobby return stopped by safety status.\n");
+                return;
+            }
+
+            Elevator_MoveOneFloor(elevator);
+        }
+
+        elevator->targetFloor = NO_TARGET_FLOOR;
+        elevator->direction = DIRECTION_NONE;
+        elevator->state = ELEVATOR_IDLE;
+        Elevator_ResetIdleTimer(elevator);
+        printf("[Idle] Elevator is now standing by at lobby floor %d.\n", LOBBY_FLOOR);
+    }
+}
+
 static void Elevator_RecordCompletedRequest(Elevator *elevator, int floor)
 {
     int index;
@@ -381,6 +434,7 @@ void Elevator_Init(Elevator *elevator)
     elevator->currentFloor = 1;
     elevator->targetFloor = NO_TARGET_FLOOR;
     elevator->totalTimeSeconds = 0;
+    elevator->idleTimeSeconds = 0;
     elevator->state = ELEVATOR_IDLE;
     elevator->direction = DIRECTION_NONE;
     elevator->door = DOOR_CLOSED;
@@ -421,6 +475,7 @@ void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
     snapshot->currentFloor = elevator->currentFloor;
     snapshot->targetFloor = elevator->targetFloor;
     snapshot->totalTimeSeconds = elevator->totalTimeSeconds;
+    snapshot->idleTimeSeconds = elevator->idleTimeSeconds;
     snapshot->state = elevator->state;
     snapshot->direction = elevator->direction;
     snapshot->door = elevator->door;
@@ -582,6 +637,7 @@ int Elevator_AddHallUpRequest(Elevator *elevator, int floor)
 
     elevator->hallUpRequests[index] = 1;
     elevator->hallUpRequestCreatedAt[index] = elevator->totalTimeSeconds;
+    Elevator_ResetIdleTimer(elevator);
     printf("[Request] Added hall up request at floor %d.\n", floor);
     return 1;
 }
@@ -615,6 +671,7 @@ int Elevator_AddHallDownRequest(Elevator *elevator, int floor)
 
     elevator->hallDownRequests[index] = 1;
     elevator->hallDownRequestCreatedAt[index] = elevator->totalTimeSeconds;
+    Elevator_ResetIdleTimer(elevator);
     printf("[Request] Added hall down request at floor %d.\n", floor);
     return 1;
 }
@@ -643,6 +700,7 @@ int Elevator_AddCarRequest(Elevator *elevator, int floor)
 
     elevator->carFloorRequests[index] = 1;
     elevator->carRequestCreatedAt[index] = elevator->totalTimeSeconds;
+    Elevator_ResetIdleTimer(elevator);
     printf("[Request] Added car request for floor %d.\n", floor);
     return 1;
 }
@@ -810,12 +868,11 @@ void Elevator_RunOneStep(Elevator *elevator)
 
     if (!Elevator_HasAnyRequest(elevator))
     {
-        elevator->targetFloor = NO_TARGET_FLOOR;
-        elevator->direction = DIRECTION_NONE;
-        elevator->state = ELEVATOR_IDLE;
-        printf("[Idle] No pending requests.\n");
+        Elevator_RunIdleStep(elevator);
         return;
     }
+
+    Elevator_ResetIdleTimer(elevator);
 
     if (Elevator_ShouldServeCurrentFloor(elevator))
     {
@@ -960,6 +1017,9 @@ void Elevator_PrintStatus(const Elevator *elevator)
     printf("Safe floor    : %d\n", elevator->safeFloor);
     printf("Fault         : %s\n", Elevator_GetFaultName(elevator->fault));
     printf("Total time    : %d seconds\n", elevator->totalTimeSeconds);
+    printf("Idle time     : %d/%d seconds\n",
+           elevator->idleTimeSeconds,
+           IDLE_RETURN_DELAY_SECONDS);
     Elevator_PrintRequests(elevator);
     Elevator_PrintStats(elevator);
     printf("-----------------------\n\n");
