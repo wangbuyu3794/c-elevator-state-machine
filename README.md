@@ -62,7 +62,7 @@ c-elevator-state-machine/
 
 ## 版本进度
 
-当前已完成到 V4.11 结构拆分版，并已开始 V5 图形界面前置准备。
+当前已完成到 V4.17 架构收尾版，并已开始 V5 图形界面前置准备。
 
 | 版本 | 状态 | 主要内容 |
 | --- | --- | --- |
@@ -85,6 +85,7 @@ c-elevator-state-machine/
 | V4.14 | 已完成 | 修复门已关闭时重复关门导致时间增加的问题 |
 | V4.15 | 已完成 | 拆分主电源、突然停电、备用电源救援和恢复流程模块 |
 | V4.16 | 已完成 | 拆分载重、故障、管理员暂停、紧急呼叫和移动安全判断模块 |
+| V4.17 | 已完成 | 修复运行到空闲时覆盖安全状态的问题，并新增 Windows 构建脚本 |
 | V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
 
 后续计划：
@@ -525,18 +526,41 @@ V4.16 暂不实现：
 - 故障恢复确认流程；
 - 更细粒度的传感器故障模型。
 
+## V4.17 功能
+
+当前版本完成进入 V5 前的一次架构收尾。
+
+已支持：
+
+- 修复 `Elevator_RunUntilIdle` 在没有请求时可能覆盖安全状态的问题；
+- 如果停电、紧急呼叫、恢复中、门未锁定等安全状态仍然存在，运行到空闲不会强行改成 `Idle`；
+- 新增 `build.bat`，用于在 Windows 下快速编译项目；
+- 编译产物输出到 Windows 临时目录 `%TEMP%\c_elevator_state_machine.exe`，不会提交到 Git 仓库。
+
+V4.17 暂不实现：
+
+- Makefile；
+- 自动化测试脚本；
+- GUI 构建流程。
+
 ## 编译方式
 
 在项目根目录执行：
 
-```powershell
-gcc -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_power.c src/elevator_safety.c src/elevator_status.c src/elevator_names.c -o elevator.exe
+```cmd
+build.bat
+```
+
+如果想手动输入完整编译命令，也可以执行：
+
+```cmd
+gcc -Wall -Wextra -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_power.c src/elevator_safety.c src/elevator_status.c src/elevator_names.c -o %TEMP%\c_elevator_state_machine.exe
 ```
 
 ## 运行方式
 
-```powershell
-.\elevator.exe
+```cmd
+%TEMP%\c_elevator_state_machine.exe
 ```
 
 ## 菜单说明

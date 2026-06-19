@@ -346,11 +346,13 @@ void Elevator_RunUntilIdle(Elevator *elevator)
     elevator->direction = DIRECTION_NONE;
     elevator->targetFloor = NO_TARGET_FLOOR;
 
-    if (elevator->door == DOOR_CLOSED &&
-        !elevator->isOverloaded &&
-        !elevator->isDoorBlocked &&
-        !elevator->isAdminPaused &&
-        elevator->fault == FAULT_NONE)
+    if (!Elevator_CanMove(elevator))
+    {
+        printf("[Safety] Requests finished, but elevator is waiting for safety recovery.\n");
+        return;
+    }
+
+    if (elevator->door == DOOR_CLOSED)
     {
         elevator->state = ELEVATOR_IDLE;
         printf("[Done] All requests finished. Total time: %ds.\n", elevator->totalTimeSeconds);
