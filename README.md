@@ -50,6 +50,7 @@ c-elevator-state-machine/
 ├── src/
 │   ├── main.c
 │   ├── elevator.c
+│   ├── elevator_request.c
 │   ├── elevator_status.c
 │   └── elevator_names.c
 ├── README.md
@@ -76,6 +77,7 @@ c-elevator-state-machine/
 | V4.9 | 已完成 | 区分主电源、突然停电和备用电源救援 |
 | V4.10 | 已完成 | 增加内部开门保持、关门按钮和紧急呼叫 |
 | V4.11 | 已完成 | 拆分状态输出和名称转换模块，降低核心文件复杂度 |
+| V4.12 | 已完成 | 拆分请求表、按钮入口、目标选择和请求统计模块 |
 | V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
 
 后续计划：
@@ -237,6 +239,7 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 
 - `include/elevator.h` 定义电梯核心数据结构、事件入口和状态快照；
 - `src/elevator.c` 负责电梯状态机、调度、安全机制和统计核心；
+- `src/elevator_request.c` 负责请求表、外部/内部按钮入口、目标选择和请求统计记录；
 - `src/elevator_status.c` 负责状态、请求和统计信息输出；
 - `src/elevator_names.c` 负责枚举值到可读文字的转换；
 - `src/main.c` 暂时作为命令行界面，负责接收用户输入；
@@ -418,12 +421,32 @@ V4.11 暂不实现：
 - 多文件 Makefile；
 - 请求模块、门模块、电源模块的进一步拆分。
 
+## V4.12 功能
+
+当前版本继续整理工程结构，把请求和调度相关逻辑拆成独立模块。
+
+已支持：
+
+- 将外部上行按钮、外部下行按钮和内部楼层按钮入口拆分到 `src/elevator_request.c`；
+- 将请求去重、请求清除、当前楼层是否应该服务拆分到请求模块；
+- 将下一目标楼层选择逻辑拆分到请求模块；
+- 将请求等待时间统计记录拆分到请求模块；
+- 保持 `src/elevator.c` 更专注于电梯运行步骤、安全状态和门/电源流程；
+- 不改变现有菜单行为和电梯运行规则。
+
+V4.12 暂不实现：
+
+- 新调度算法；
+- 多乘客事件队列；
+- 外部请求和乘客目的地绑定；
+- 图形界面。
+
 ## 编译方式
 
 在项目根目录执行：
 
 ```powershell
-gcc -Iinclude src/main.c src/elevator.c src/elevator_status.c src/elevator_names.c -o elevator.exe
+gcc -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_status.c src/elevator_names.c -o elevator.exe
 ```
 
 ## 运行方式

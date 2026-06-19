@@ -176,6 +176,11 @@ int Elevator_IsValidHallUpFloor(int floor);
 int Elevator_IsValidHallDownFloor(int floor);
 
 int Elevator_FindNextTarget(const Elevator *elevator);
+int Elevator_ShouldServeCurrentFloor(const Elevator *elevator);
+int Elevator_ClearServedRequestsAtCurrentFloor(Elevator *elevator);
+void Elevator_RecordCompletedRequest(Elevator *elevator, int floor);
+void Elevator_ResetIdleTimer(Elevator *elevator);
+void Elevator_ClearAllCarRequests(Elevator *elevator);
 void Elevator_UpdateDirection(Elevator *elevator);
 void Elevator_MoveOneFloor(Elevator *elevator);
 void Elevator_RunOneStep(Elevator *elevator);
