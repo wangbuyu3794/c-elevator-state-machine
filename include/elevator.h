@@ -77,9 +77,15 @@ typedef struct
     int isDoorBlocked;
     int isAdminPaused;
     int isPowerOff;
+    int isMainPowerOn;
+    int isBackupPowerAvailable;
+    int isBackupPowerActive;
+    int isPowerFailure;
     int isRecovering;
     int isBetweenFloors;
     int safeFloor;
+    int rescueFloor;
+    ElevatorDirection directionBeforePowerFailure;
 
     /*
      * Hall requests come from the outside panel on each floor.
@@ -124,9 +130,15 @@ typedef struct
     int isDoorBlocked;
     int isAdminPaused;
     int isPowerOff;
+    int isMainPowerOn;
+    int isBackupPowerAvailable;
+    int isBackupPowerActive;
+    int isPowerFailure;
     int isRecovering;
     int isBetweenFloors;
     int safeFloor;
+    int rescueFloor;
+    ElevatorDirection directionBeforePowerFailure;
     int canMove;
     int canCloseDoor;
 
@@ -180,6 +192,9 @@ void Elevator_AdminPause(Elevator *elevator);
 void Elevator_AdminResume(Elevator *elevator);
 void Elevator_PowerOff(Elevator *elevator);
 void Elevator_RestorePower(Elevator *elevator);
+void Elevator_SimulatePowerFailure(Elevator *elevator);
+void Elevator_RunBackupRescue(Elevator *elevator);
+void Elevator_SetBackupPowerAvailable(Elevator *elevator, int isAvailable);
 void Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor);
 void Elevator_RunRecovery(Elevator *elevator);
 

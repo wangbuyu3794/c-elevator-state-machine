@@ -22,6 +22,9 @@ static void PrintMenu(void)
     printf("15. Print statistics\n");
     printf("16. Press hall up button\n");
     printf("17. Press hall down button\n");
+    printf("18. Simulate power failure\n");
+    printf("19. Set backup power available\n");
+    printf("20. Run backup rescue\n");
     printf("0. Exit\n");
     printf("Choose: ");
 }
@@ -33,6 +36,7 @@ int main(void)
     int floor;
     int loadKg;
     int isBlocked;
+    int isAvailable;
     int faultChoice;
     int safeFloor;
 
@@ -166,6 +170,21 @@ int main(void)
                 return 1;
             }
             Elevator_AddHallDownRequest(&elevator, floor);
+            break;
+        case 18:
+            Elevator_SimulatePowerFailure(&elevator);
+            break;
+        case 19:
+            printf("Backup power available? 1 = yes, 0 = no: ");
+            if (scanf("%d", &isAvailable) != 1)
+            {
+                printf("Invalid backup power input. Program stopped.\n");
+                return 1;
+            }
+            Elevator_SetBackupPowerAvailable(&elevator, isAvailable);
+            break;
+        case 20:
+            Elevator_RunBackupRescue(&elevator);
             break;
         default:
             printf("Unknown menu option.\n");
