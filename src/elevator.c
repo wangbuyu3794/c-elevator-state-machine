@@ -463,17 +463,17 @@ static void Elevator_UpdateSafetyState(Elevator *elevator)
         return;
     }
 
-    if (elevator->isEmergencyCallActive)
+    if (elevator->fault != FAULT_NONE)
     {
-        elevator->state = ELEVATOR_PAUSED;
+        elevator->state = ELEVATOR_FAULT;
         elevator->direction = DIRECTION_NONE;
         elevator->targetFloor = NO_TARGET_FLOOR;
         return;
     }
 
-    if (elevator->fault != FAULT_NONE)
+    if (elevator->isEmergencyCallActive)
     {
-        elevator->state = ELEVATOR_FAULT;
+        elevator->state = ELEVATOR_PAUSED;
         elevator->direction = DIRECTION_NONE;
         elevator->targetFloor = NO_TARGET_FLOOR;
         return;
