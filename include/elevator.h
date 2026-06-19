@@ -75,6 +75,8 @@ typedef struct
     int currentLoadKg;
     int isOverloaded;
     int isDoorBlocked;
+    int isDoorOpenButtonHeld;
+    int isEmergencyCallActive;
     int isAdminPaused;
     int isPowerOff;
     int isMainPowerOn;
@@ -128,6 +130,8 @@ typedef struct
     int currentLoadKg;
     int isOverloaded;
     int isDoorBlocked;
+    int isDoorOpenButtonHeld;
+    int isEmergencyCallActive;
     int isAdminPaused;
     int isPowerOff;
     int isMainPowerOn;
@@ -180,6 +184,11 @@ void Elevator_RunUntilIdle(Elevator *elevator);
 void Elevator_OpenDoor(Elevator *elevator);
 void Elevator_HoldDoor(Elevator *elevator);
 void Elevator_CloseDoor(Elevator *elevator);
+void Elevator_PressDoorOpenButton(Elevator *elevator);
+void Elevator_ReleaseDoorOpenButton(Elevator *elevator);
+void Elevator_PressDoorCloseButton(Elevator *elevator);
+void Elevator_PressEmergencyCallButton(Elevator *elevator);
+void Elevator_ClearEmergencyCall(Elevator *elevator);
 
 int Elevator_CanMove(const Elevator *elevator);
 int Elevator_CanCloseDoor(const Elevator *elevator);

@@ -25,6 +25,11 @@ static void PrintMenu(void)
     printf("18. Simulate power failure\n");
     printf("19. Set backup power available\n");
     printf("20. Run backup rescue\n");
+    printf("21. Hold door open button\n");
+    printf("22. Release door open button\n");
+    printf("23. Press door close button\n");
+    printf("24. Press emergency call button\n");
+    printf("25. Clear emergency call\n");
     printf("0. Exit\n");
     printf("Choose: ");
 }
@@ -185,6 +190,21 @@ int main(void)
             break;
         case 20:
             Elevator_RunBackupRescue(&elevator);
+            break;
+        case 21:
+            Elevator_PressDoorOpenButton(&elevator);
+            break;
+        case 22:
+            Elevator_ReleaseDoorOpenButton(&elevator);
+            break;
+        case 23:
+            Elevator_PressDoorCloseButton(&elevator);
+            break;
+        case 24:
+            Elevator_PressEmergencyCallButton(&elevator);
+            break;
+        case 25:
+            Elevator_ClearEmergencyCall(&elevator);
             break;
         default:
             printf("Unknown menu option.\n");

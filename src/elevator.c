@@ -463,6 +463,14 @@ static void Elevator_UpdateSafetyState(Elevator *elevator)
         return;
     }
 
+    if (elevator->isEmergencyCallActive)
+    {
+        elevator->state = ELEVATOR_PAUSED;
+        elevator->direction = DIRECTION_NONE;
+        elevator->targetFloor = NO_TARGET_FLOOR;
+        return;
+    }
+
     if (elevator->fault != FAULT_NONE)
     {
         elevator->state = ELEVATOR_FAULT;
@@ -471,7 +479,7 @@ static void Elevator_UpdateSafetyState(Elevator *elevator)
         return;
     }
 
-    if (elevator->isOverloaded || elevator->isDoorBlocked)
+    if (elevator->isOverloaded || elevator->isDoorBlocked || elevator->isDoorOpenButtonHeld)
     {
         Elevator_ForceDoorsOpenAtCurrentFloor(elevator);
         elevator->state = ELEVATOR_DOOR_HOLDING;
@@ -539,6 +547,8 @@ void Elevator_Init(Elevator *elevator)
     elevator->currentLoadKg = 0;
     elevator->isOverloaded = 0;
     elevator->isDoorBlocked = 0;
+    elevator->isDoorOpenButtonHeld = 0;
+    elevator->isEmergencyCallActive = 0;
     elevator->isAdminPaused = 0;
     elevator->isPowerOff = 0;
     elevator->isMainPowerOn = 1;
@@ -591,6 +601,8 @@ void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
     snapshot->currentLoadKg = elevator->currentLoadKg;
     snapshot->isOverloaded = elevator->isOverloaded;
     snapshot->isDoorBlocked = elevator->isDoorBlocked;
+    snapshot->isDoorOpenButtonHeld = elevator->isDoorOpenButtonHeld;
+    snapshot->isEmergencyCallActive = elevator->isEmergencyCallActive;
     snapshot->isAdminPaused = elevator->isAdminPaused;
     snapshot->isPowerOff = elevator->isPowerOff;
     snapshot->isMainPowerOn = elevator->isMainPowerOn;
@@ -1182,6 +1194,8 @@ void Elevator_PrintStatus(const Elevator *elevator)
     printf("All doors safe: %s\n", Elevator_AreAllLandingDoorsLocked(elevator) ? "Yes" : "No");
     printf("Load          : %d/%d kg\n", elevator->currentLoadKg, MAX_LOAD_KG);
     printf("Door blocked  : %s\n", elevator->isDoorBlocked ? "Yes" : "No");
+    printf("Open held     : %s\n", elevator->isDoorOpenButtonHeld ? "Yes" : "No");
+    printf("Emergency call: %s\n", elevator->isEmergencyCallActive ? "Yes" : "No");
     printf("Admin paused  : %s\n", elevator->isAdminPaused ? "Yes" : "No");
     printf("Power off     : %s\n", elevator->isPowerOff ? "Yes" : "No");
     printf("Main power    : %s\n", elevator->isMainPowerOn ? "On" : "Off");
@@ -1345,6 +1359,11 @@ int Elevator_CanMove(const Elevator *elevator)
         return 0;
     }
 
+    if (elevator->isEmergencyCallActive)
+    {
+        return 0;
+    }
+
     if (elevator->isPowerOff || elevator->isRecovering)
     {
         return 0;
@@ -1411,6 +1430,11 @@ int Elevator_CanCloseDoor(const Elevator *elevator)
         return 0;
     }
 
+    if (elevator->isEmergencyCallActive)
+    {
+        return 0;
+    }
+
     if (elevator->isPowerOff)
     {
         return 0;
@@ -1436,7 +1460,76 @@ int Elevator_CanCloseDoor(const Elevator *elevator)
         return 0;
     }
 
+    if (elevator->isDoorOpenButtonHeld)
+    {
+        return 0;
+    }
+
     return 1;
+}
+
+void Elevator_PressDoorOpenButton(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->isDoorOpenButtonHeld = 1;
+    printf("[Cabin] Door open button held.\n");
+
+    if (!elevator->isPowerOff && elevator->fault == FAULT_NONE && elevator->isAlignedWithFloor)
+    {
+        Elevator_ForceDoorsOpenAtCurrentFloor(elevator);
+        elevator->state = ELEVATOR_DOOR_HOLDING;
+    }
+}
+
+void Elevator_ReleaseDoorOpenButton(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->isDoorOpenButtonHeld = 0;
+    printf("[Cabin] Door open button released.\n");
+    Elevator_UpdateSafetyState(elevator);
+}
+
+void Elevator_PressDoorCloseButton(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    printf("[Cabin] Door close button pressed.\n");
+    Elevator_CloseDoor(elevator);
+}
+
+void Elevator_PressEmergencyCallButton(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->isEmergencyCallActive = 1;
+    Elevator_UpdateSafetyState(elevator);
+    printf("[Emergency] Emergency call button pressed. Normal scheduling paused.\n");
+}
+
+void Elevator_ClearEmergencyCall(Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    elevator->isEmergencyCallActive = 0;
+    Elevator_UpdateSafetyState(elevator);
+    printf("[Emergency] Emergency call cleared.\n");
 }
 
 void Elevator_SetLoad(Elevator *elevator, int loadKg)
