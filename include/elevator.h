@@ -74,11 +74,16 @@ typedef struct
     int safeFloor;
 
     /*
-     * Each array element stores whether a floor has a pending request.
-     * 1 means requested, 0 means not requested.
+     * Hall requests come from the outside panel on each floor.
+     * Car requests come from the buttons inside the elevator.
      */
-    int floorRequests[TOTAL_FLOOR_COUNT];
-    int requestCreatedAt[TOTAL_FLOOR_COUNT];
+    int hallUpRequests[TOTAL_FLOOR_COUNT];
+    int hallDownRequests[TOTAL_FLOOR_COUNT];
+    int carFloorRequests[TOTAL_FLOOR_COUNT];
+
+    int hallUpRequestCreatedAt[TOTAL_FLOOR_COUNT];
+    int hallDownRequestCreatedAt[TOTAL_FLOOR_COUNT];
+    int carRequestCreatedAt[TOTAL_FLOOR_COUNT];
 
     int completedRequestCount;
     int totalWaitTimeSeconds;
@@ -94,7 +99,12 @@ int Elevator_IndexToFloor(int index);
 int Elevator_HasAnyRequest(const Elevator *elevator);
 int Elevator_HasRequestAtFloor(const Elevator *elevator, int floor);
 int Elevator_AddRequest(Elevator *elevator, int floor);
+int Elevator_AddHallUpRequest(Elevator *elevator, int floor);
+int Elevator_AddHallDownRequest(Elevator *elevator, int floor);
+int Elevator_AddCarRequest(Elevator *elevator, int floor);
 int Elevator_ClearRequest(Elevator *elevator, int floor);
+int Elevator_IsValidHallUpFloor(int floor);
+int Elevator_IsValidHallDownFloor(int floor);
 
 int Elevator_FindNextTarget(const Elevator *elevator);
 void Elevator_UpdateDirection(Elevator *elevator);

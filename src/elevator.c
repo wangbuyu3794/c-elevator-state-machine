@@ -6,10 +6,23 @@ static int Elevator_Abs(int value)
     return value < 0 ? -value : value;
 }
 
+static int Elevator_HasRequestAtIndex(const Elevator *elevator, int index)
+{
+    if (elevator == NULL || index < 0 || index >= TOTAL_FLOOR_COUNT)
+    {
+        return 0;
+    }
+
+    return elevator->hallUpRequests[index] ||
+           elevator->hallDownRequests[index] ||
+           elevator->carFloorRequests[index];
+}
+
 static void Elevator_RecordCompletedRequest(Elevator *elevator, int floor)
 {
     int index;
     int waitTime;
+    int hasRecordedRequest = 0;
 
     if (elevator == NULL)
     {
@@ -17,25 +30,75 @@ static void Elevator_RecordCompletedRequest(Elevator *elevator, int floor)
     }
 
     index = Elevator_FloorToIndex(floor);
-    if (index < 0 || !elevator->floorRequests[index])
+    if (index < 0 || !Elevator_HasRequestAtIndex(elevator, index))
     {
         return;
     }
 
-    waitTime = elevator->totalTimeSeconds - elevator->requestCreatedAt[index];
-    if (waitTime < 0)
+    if (elevator->hallUpRequests[index])
     {
-        waitTime = 0;
+        waitTime = elevator->totalTimeSeconds - elevator->hallUpRequestCreatedAt[index];
+        if (waitTime < 0)
+        {
+            waitTime = 0;
+        }
+
+        elevator->completedRequestCount++;
+        elevator->totalWaitTimeSeconds += waitTime;
+        if (waitTime > elevator->longestWaitTimeSeconds)
+        {
+            elevator->longestWaitTimeSeconds = waitTime;
+        }
+        printf("[Stats] Hall up request at floor %d waited %d seconds before service.\n",
+               floor,
+               waitTime);
+        hasRecordedRequest = 1;
     }
 
-    elevator->completedRequestCount++;
-    elevator->totalWaitTimeSeconds += waitTime;
-    if (waitTime > elevator->longestWaitTimeSeconds)
+    if (elevator->hallDownRequests[index])
     {
-        elevator->longestWaitTimeSeconds = waitTime;
+        waitTime = elevator->totalTimeSeconds - elevator->hallDownRequestCreatedAt[index];
+        if (waitTime < 0)
+        {
+            waitTime = 0;
+        }
+
+        elevator->completedRequestCount++;
+        elevator->totalWaitTimeSeconds += waitTime;
+        if (waitTime > elevator->longestWaitTimeSeconds)
+        {
+            elevator->longestWaitTimeSeconds = waitTime;
+        }
+        printf("[Stats] Hall down request at floor %d waited %d seconds before service.\n",
+               floor,
+               waitTime);
+        hasRecordedRequest = 1;
     }
 
-    printf("[Stats] Floor %d waited %d seconds before service.\n", floor, waitTime);
+    if (elevator->carFloorRequests[index])
+    {
+        waitTime = elevator->totalTimeSeconds - elevator->carRequestCreatedAt[index];
+        if (waitTime < 0)
+        {
+            waitTime = 0;
+        }
+
+        elevator->completedRequestCount++;
+        elevator->totalWaitTimeSeconds += waitTime;
+        if (waitTime > elevator->longestWaitTimeSeconds)
+        {
+            elevator->longestWaitTimeSeconds = waitTime;
+        }
+        printf("[Stats] Car request for floor %d waited %d seconds before service.\n",
+               floor,
+               waitTime);
+        hasRecordedRequest = 1;
+    }
+
+    if (!hasRecordedRequest)
+    {
+        printf("[Stats] No request statistics recorded for floor %d.\n", floor);
+    }
 }
 
 static void Elevator_UpdateSafetyState(Elevator *elevator)
@@ -149,8 +212,12 @@ void Elevator_Init(Elevator *elevator)
 
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
-        elevator->floorRequests[i] = 0;
-        elevator->requestCreatedAt[i] = 0;
+        elevator->hallUpRequests[i] = 0;
+        elevator->hallDownRequests[i] = 0;
+        elevator->carFloorRequests[i] = 0;
+        elevator->hallUpRequestCreatedAt[i] = 0;
+        elevator->hallDownRequestCreatedAt[i] = 0;
+        elevator->carRequestCreatedAt[i] = 0;
     }
 
     elevator->completedRequestCount = 0;
@@ -204,7 +271,7 @@ int Elevator_HasAnyRequest(const Elevator *elevator)
 
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
-        if (elevator->floorRequests[i])
+        if (Elevator_HasRequestAtIndex(elevator, i))
         {
             return 1;
         }
@@ -228,10 +295,92 @@ int Elevator_HasRequestAtFloor(const Elevator *elevator, int floor)
         return 0;
     }
 
-    return elevator->floorRequests[index] != 0;
+    return Elevator_HasRequestAtIndex(elevator, index);
 }
 
 int Elevator_AddRequest(Elevator *elevator, int floor)
+{
+    return Elevator_AddCarRequest(elevator, floor);
+}
+
+int Elevator_IsValidHallUpFloor(int floor)
+{
+    return floor >= MIN_FLOOR && floor < MAX_FLOOR && floor != 0;
+}
+
+int Elevator_IsValidHallDownFloor(int floor)
+{
+    return floor > MIN_FLOOR && floor <= MAX_FLOOR && floor != 0;
+}
+
+int Elevator_AddHallUpRequest(Elevator *elevator, int floor)
+{
+    int index;
+
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    if (!Elevator_IsValidHallUpFloor(floor))
+    {
+        printf("[Request] Floor %d cannot make a hall up request.\n", floor);
+        return 0;
+    }
+
+    index = Elevator_FloorToIndex(floor);
+    if (index < 0)
+    {
+        printf("[Request] Floor %d is invalid.\n", floor);
+        return 0;
+    }
+
+    if (elevator->hallUpRequests[index])
+    {
+        printf("[Request] Hall up request at floor %d already exists.\n", floor);
+        return 0;
+    }
+
+    elevator->hallUpRequests[index] = 1;
+    elevator->hallUpRequestCreatedAt[index] = elevator->totalTimeSeconds;
+    printf("[Request] Added hall up request at floor %d.\n", floor);
+    return 1;
+}
+
+int Elevator_AddHallDownRequest(Elevator *elevator, int floor)
+{
+    int index;
+
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    if (!Elevator_IsValidHallDownFloor(floor))
+    {
+        printf("[Request] Floor %d cannot make a hall down request.\n", floor);
+        return 0;
+    }
+
+    index = Elevator_FloorToIndex(floor);
+    if (index < 0)
+    {
+        return 0;
+    }
+
+    if (elevator->hallDownRequests[index])
+    {
+        printf("[Request] Hall down request at floor %d already exists.\n", floor);
+        return 0;
+    }
+
+    elevator->hallDownRequests[index] = 1;
+    elevator->hallDownRequestCreatedAt[index] = elevator->totalTimeSeconds;
+    printf("[Request] Added hall down request at floor %d.\n", floor);
+    return 1;
+}
+
+int Elevator_AddCarRequest(Elevator *elevator, int floor)
 {
     int index;
 
@@ -247,15 +396,15 @@ int Elevator_AddRequest(Elevator *elevator, int floor)
         return 0;
     }
 
-    if (elevator->floorRequests[index])
+    if (elevator->carFloorRequests[index])
     {
-        printf("[Request] Floor %d is already in the request table.\n", floor);
+        printf("[Request] Car request for floor %d already exists.\n", floor);
         return 0;
     }
 
-    elevator->floorRequests[index] = 1;
-    elevator->requestCreatedAt[index] = elevator->totalTimeSeconds;
-    printf("[Request] Added floor %d.\n", floor);
+    elevator->carFloorRequests[index] = 1;
+    elevator->carRequestCreatedAt[index] = elevator->totalTimeSeconds;
+    printf("[Request] Added car request for floor %d.\n", floor);
     return 1;
 }
 
@@ -269,13 +418,17 @@ int Elevator_ClearRequest(Elevator *elevator, int floor)
     }
 
     index = Elevator_FloorToIndex(floor);
-    if (index < 0 || !elevator->floorRequests[index])
+    if (index < 0 || !Elevator_HasRequestAtIndex(elevator, index))
     {
         return 0;
     }
 
-    elevator->floorRequests[index] = 0;
-    elevator->requestCreatedAt[index] = 0;
+    elevator->hallUpRequests[index] = 0;
+    elevator->hallDownRequests[index] = 0;
+    elevator->carFloorRequests[index] = 0;
+    elevator->hallUpRequestCreatedAt[index] = 0;
+    elevator->hallDownRequestCreatedAt[index] = 0;
+    elevator->carRequestCreatedAt[index] = 0;
     return 1;
 }
 
@@ -296,7 +449,7 @@ int Elevator_FindNextTarget(const Elevator *elevator)
         for (i = Elevator_FloorToIndex(elevator->currentFloor) + 1; i < TOTAL_FLOOR_COUNT; i++)
         {
             floor = Elevator_IndexToFloor(i);
-            if (floor > elevator->currentFloor && elevator->floorRequests[i])
+            if (floor > elevator->currentFloor && Elevator_HasRequestAtIndex(elevator, i))
             {
                 return floor;
             }
@@ -307,7 +460,7 @@ int Elevator_FindNextTarget(const Elevator *elevator)
         for (i = Elevator_FloorToIndex(elevator->currentFloor) - 1; i >= 0; i--)
         {
             floor = Elevator_IndexToFloor(i);
-            if (floor < elevator->currentFloor && elevator->floorRequests[i])
+            if (floor < elevator->currentFloor && Elevator_HasRequestAtIndex(elevator, i))
             {
                 return floor;
             }
@@ -316,7 +469,7 @@ int Elevator_FindNextTarget(const Elevator *elevator)
 
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
-        if (elevator->floorRequests[i])
+        if (Elevator_HasRequestAtIndex(elevator, i))
         {
             int distance;
 
@@ -574,10 +727,46 @@ void Elevator_PrintRequests(const Elevator *elevator)
         return;
     }
 
-    printf("Pending floors: ");
+    printf("Hall up req   : ");
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
-        if (elevator->floorRequests[i])
+        if (elevator->hallUpRequests[i])
+        {
+            printf("%d ", Elevator_IndexToFloor(i));
+            hasRequest = 1;
+        }
+    }
+
+    if (!hasRequest)
+    {
+        printf("None");
+    }
+
+    printf("\n");
+
+    hasRequest = 0;
+    printf("Hall down req : ");
+    for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
+    {
+        if (elevator->hallDownRequests[i])
+        {
+            printf("%d ", Elevator_IndexToFloor(i));
+            hasRequest = 1;
+        }
+    }
+
+    if (!hasRequest)
+    {
+        printf("None");
+    }
+
+    printf("\n");
+
+    hasRequest = 0;
+    printf("Car floor req : ");
+    for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
+    {
+        if (elevator->carFloorRequests[i])
         {
             printf("%d ", Elevator_IndexToFloor(i));
             hasRequest = 1;

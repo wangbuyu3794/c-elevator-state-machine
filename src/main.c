@@ -5,7 +5,7 @@
 static void PrintMenu(void)
 {
     printf("C Elevator State Machine\n");
-    printf("1. Add floor request\n");
+    printf("1. Press car floor button\n");
     printf("2. Run one step\n");
     printf("3. Run until idle\n");
     printf("4. Print status\n");
@@ -20,6 +20,8 @@ static void PrintMenu(void)
     printf("13. Simulate between floors\n");
     printf("14. Run recovery\n");
     printf("15. Print statistics\n");
+    printf("16. Press hall up button\n");
+    printf("17. Press hall down button\n");
     printf("0. Exit\n");
     printf("Choose: ");
 }
@@ -56,13 +58,13 @@ int main(void)
         switch (choice)
         {
         case 1:
-            printf("Enter floor (-1 or 1-34): ");
+            printf("Enter car target floor (-1 or 1-34): ");
             if (scanf("%d", &floor) != 1)
             {
                 printf("Invalid floor input. Program stopped.\n");
                 return 1;
             }
-            Elevator_AddRequest(&elevator, floor);
+            Elevator_AddCarRequest(&elevator, floor);
             break;
         case 2:
             Elevator_RunOneStep(&elevator);
@@ -146,6 +148,24 @@ int main(void)
             break;
         case 15:
             Elevator_PrintStats(&elevator);
+            break;
+        case 16:
+            printf("Enter hall up floor (-1 or 1-33): ");
+            if (scanf("%d", &floor) != 1)
+            {
+                printf("Invalid floor input. Program stopped.\n");
+                return 1;
+            }
+            Elevator_AddHallUpRequest(&elevator, floor);
+            break;
+        case 17:
+            printf("Enter hall down floor (1-34): ");
+            if (scanf("%d", &floor) != 1)
+            {
+                printf("Invalid floor input. Program stopped.\n");
+                return 1;
+            }
+            Elevator_AddHallDownRequest(&elevator, floor);
             break;
         default:
             printf("Unknown menu option.\n");
