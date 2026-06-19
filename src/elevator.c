@@ -660,6 +660,12 @@ int Elevator_FindNextTarget(const Elevator *elevator)
             int distance;
 
             floor = Elevator_IndexToFloor(i);
+            if (floor == elevator->currentFloor &&
+                !Elevator_ShouldServeCurrentFloor(elevator))
+            {
+                continue;
+            }
+
             distance = Elevator_Abs(floor - elevator->currentFloor);
 
             if (distance < bestDistance)
