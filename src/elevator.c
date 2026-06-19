@@ -18,6 +18,182 @@ static int Elevator_HasRequestAtIndex(const Elevator *elevator, int index)
            elevator->carFloorRequests[index];
 }
 
+static int Elevator_HasRequestAbove(const Elevator *elevator, int floor)
+{
+    int i;
+    int currentIndex;
+
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    currentIndex = Elevator_FloorToIndex(floor);
+    if (currentIndex < 0)
+    {
+        return 0;
+    }
+
+    for (i = currentIndex + 1; i < TOTAL_FLOOR_COUNT; i++)
+    {
+        if (Elevator_HasRequestAtIndex(elevator, i))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int Elevator_HasRequestBelow(const Elevator *elevator, int floor)
+{
+    int i;
+    int currentIndex;
+
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    currentIndex = Elevator_FloorToIndex(floor);
+    if (currentIndex < 0)
+    {
+        return 0;
+    }
+
+    for (i = currentIndex - 1; i >= 0; i--)
+    {
+        if (Elevator_HasRequestAtIndex(elevator, i))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int Elevator_ShouldServeCurrentFloor(const Elevator *elevator)
+{
+    int index;
+
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    index = Elevator_FloorToIndex(elevator->currentFloor);
+    if (index < 0)
+    {
+        return 0;
+    }
+
+    if (elevator->carFloorRequests[index])
+    {
+        return 1;
+    }
+
+    if (elevator->direction == DIRECTION_UP)
+    {
+        if (elevator->hallUpRequests[index])
+        {
+            return 1;
+        }
+
+        return elevator->hallDownRequests[index] &&
+               !Elevator_HasRequestAbove(elevator, elevator->currentFloor);
+    }
+
+    if (elevator->direction == DIRECTION_DOWN)
+    {
+        if (elevator->hallDownRequests[index])
+        {
+            return 1;
+        }
+
+        return elevator->hallUpRequests[index] &&
+               !Elevator_HasRequestBelow(elevator, elevator->currentFloor);
+    }
+
+    return Elevator_HasRequestAtIndex(elevator, index);
+}
+
+static int Elevator_ClearServedRequestsAtCurrentFloor(Elevator *elevator)
+{
+    int index;
+    int cleared = 0;
+
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    index = Elevator_FloorToIndex(elevator->currentFloor);
+    if (index < 0)
+    {
+        return 0;
+    }
+
+    if (elevator->carFloorRequests[index])
+    {
+        elevator->carFloorRequests[index] = 0;
+        elevator->carRequestCreatedAt[index] = 0;
+        cleared = 1;
+    }
+
+    if (elevator->direction == DIRECTION_UP)
+    {
+        if (elevator->hallUpRequests[index])
+        {
+            elevator->hallUpRequests[index] = 0;
+            elevator->hallUpRequestCreatedAt[index] = 0;
+            cleared = 1;
+        }
+
+        if (elevator->hallDownRequests[index] &&
+            !Elevator_HasRequestAbove(elevator, elevator->currentFloor))
+        {
+            elevator->hallDownRequests[index] = 0;
+            elevator->hallDownRequestCreatedAt[index] = 0;
+            cleared = 1;
+        }
+    }
+    else if (elevator->direction == DIRECTION_DOWN)
+    {
+        if (elevator->hallDownRequests[index])
+        {
+            elevator->hallDownRequests[index] = 0;
+            elevator->hallDownRequestCreatedAt[index] = 0;
+            cleared = 1;
+        }
+
+        if (elevator->hallUpRequests[index] &&
+            !Elevator_HasRequestBelow(elevator, elevator->currentFloor))
+        {
+            elevator->hallUpRequests[index] = 0;
+            elevator->hallUpRequestCreatedAt[index] = 0;
+            cleared = 1;
+        }
+    }
+    else
+    {
+        if (elevator->hallUpRequests[index])
+        {
+            elevator->hallUpRequests[index] = 0;
+            elevator->hallUpRequestCreatedAt[index] = 0;
+            cleared = 1;
+        }
+
+        if (elevator->hallDownRequests[index])
+        {
+            elevator->hallDownRequests[index] = 0;
+            elevator->hallDownRequestCreatedAt[index] = 0;
+            cleared = 1;
+        }
+    }
+
+    return cleared;
+}
+
 static void Elevator_RecordCompletedRequest(Elevator *elevator, int floor)
 {
     int index;
@@ -35,7 +211,11 @@ static void Elevator_RecordCompletedRequest(Elevator *elevator, int floor)
         return;
     }
 
-    if (elevator->hallUpRequests[index])
+    if (elevator->hallUpRequests[index] &&
+        (elevator->direction == DIRECTION_NONE ||
+         elevator->direction == DIRECTION_UP ||
+         (elevator->direction == DIRECTION_DOWN &&
+          !Elevator_HasRequestBelow(elevator, elevator->currentFloor))))
     {
         waitTime = elevator->totalTimeSeconds - elevator->hallUpRequestCreatedAt[index];
         if (waitTime < 0)
@@ -55,7 +235,11 @@ static void Elevator_RecordCompletedRequest(Elevator *elevator, int floor)
         hasRecordedRequest = 1;
     }
 
-    if (elevator->hallDownRequests[index])
+    if (elevator->hallDownRequests[index] &&
+        (elevator->direction == DIRECTION_NONE ||
+         elevator->direction == DIRECTION_DOWN ||
+         (elevator->direction == DIRECTION_UP &&
+          !Elevator_HasRequestAbove(elevator, elevator->currentFloor))))
     {
         waitTime = elevator->totalTimeSeconds - elevator->hallDownRequestCreatedAt[index];
         if (waitTime < 0)
@@ -161,7 +345,7 @@ static void Elevator_UpdateSafetyState(Elevator *elevator)
 static void Elevator_FinishStop(Elevator *elevator)
 {
     Elevator_RecordCompletedRequest(elevator, elevator->currentFloor);
-    Elevator_ClearRequest(elevator, elevator->currentFloor);
+    Elevator_ClearServedRequestsAtCurrentFloor(elevator);
     Elevator_OpenDoor(elevator);
     Elevator_HoldDoor(elevator);
     Elevator_CloseDoor(elevator);
@@ -449,7 +633,8 @@ int Elevator_FindNextTarget(const Elevator *elevator)
         for (i = Elevator_FloorToIndex(elevator->currentFloor) + 1; i < TOTAL_FLOOR_COUNT; i++)
         {
             floor = Elevator_IndexToFloor(i);
-            if (floor > elevator->currentFloor && Elevator_HasRequestAtIndex(elevator, i))
+            if (floor > elevator->currentFloor &&
+                (elevator->carFloorRequests[i] || elevator->hallUpRequests[i]))
             {
                 return floor;
             }
@@ -460,7 +645,8 @@ int Elevator_FindNextTarget(const Elevator *elevator)
         for (i = Elevator_FloorToIndex(elevator->currentFloor) - 1; i >= 0; i--)
         {
             floor = Elevator_IndexToFloor(i);
-            if (floor < elevator->currentFloor && Elevator_HasRequestAtIndex(elevator, i))
+            if (floor < elevator->currentFloor &&
+                (elevator->carFloorRequests[i] || elevator->hallDownRequests[i]))
             {
                 return floor;
             }
@@ -570,7 +756,7 @@ void Elevator_RunOneStep(Elevator *elevator)
         return;
     }
 
-    if (Elevator_HasRequestAtFloor(elevator, elevator->currentFloor))
+    if (Elevator_ShouldServeCurrentFloor(elevator))
     {
         printf("[Arrive] Serving request at floor %d.\n", elevator->currentFloor);
         Elevator_FinishStop(elevator);
@@ -589,7 +775,8 @@ void Elevator_RunOneStep(Elevator *elevator)
 
     Elevator_MoveOneFloor(elevator);
 
-    if (elevator->currentFloor == elevator->targetFloor)
+    if (elevator->currentFloor == elevator->targetFloor &&
+        Elevator_ShouldServeCurrentFloor(elevator))
     {
         printf("[Arrive] Target floor %d reached.\n", elevator->currentFloor);
         Elevator_FinishStop(elevator);
