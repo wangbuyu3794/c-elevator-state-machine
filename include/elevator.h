@@ -66,6 +66,10 @@ typedef struct
     ElevatorState state;
     ElevatorDirection direction;
     DoorState door;
+    DoorState carDoor;
+    DoorState landingDoors[TOTAL_FLOOR_COUNT];
+    int landingDoorLocked[TOTAL_FLOOR_COUNT];
+    int isAlignedWithFloor;
     FaultType fault;
 
     int currentLoadKg;
@@ -109,6 +113,10 @@ typedef struct
     ElevatorState state;
     ElevatorDirection direction;
     DoorState door;
+    DoorState carDoor;
+    DoorState landingDoors[TOTAL_FLOOR_COUNT];
+    int landingDoorLocked[TOTAL_FLOOR_COUNT];
+    int isAlignedWithFloor;
     FaultType fault;
 
     int currentLoadKg;
@@ -163,6 +171,7 @@ void Elevator_CloseDoor(Elevator *elevator);
 
 int Elevator_CanMove(const Elevator *elevator);
 int Elevator_CanCloseDoor(const Elevator *elevator);
+int Elevator_AreAllLandingDoorsLocked(const Elevator *elevator);
 void Elevator_SetLoad(Elevator *elevator, int loadKg);
 void Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked);
 void Elevator_SetFault(Elevator *elevator, FaultType fault);

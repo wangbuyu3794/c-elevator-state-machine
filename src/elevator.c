@@ -18,6 +18,56 @@ static int Elevator_HasRequestAtIndex(const Elevator *elevator, int index)
            elevator->carFloorRequests[index];
 }
 
+static int Elevator_GetCurrentFloorIndex(const Elevator *elevator)
+{
+    if (elevator == NULL)
+    {
+        return -1;
+    }
+
+    return Elevator_FloorToIndex(elevator->currentFloor);
+}
+
+static void Elevator_UpdateOverallDoorState(Elevator *elevator)
+{
+    int index;
+
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    index = Elevator_GetCurrentFloorIndex(elevator);
+    if (index >= 0 && elevator->landingDoors[index] == DOOR_OPEN)
+    {
+        elevator->door = DOOR_OPEN;
+        return;
+    }
+
+    elevator->door = elevator->carDoor;
+}
+
+static void Elevator_ForceDoorsOpenAtCurrentFloor(Elevator *elevator)
+{
+    int index;
+
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    index = Elevator_GetCurrentFloorIndex(elevator);
+    if (index < 0 || !elevator->isAlignedWithFloor)
+    {
+        return;
+    }
+
+    elevator->landingDoorLocked[index] = 0;
+    elevator->landingDoors[index] = DOOR_OPEN;
+    elevator->carDoor = DOOR_OPEN;
+    Elevator_UpdateOverallDoorState(elevator);
+}
+
 static int Elevator_HasRequestAbove(const Elevator *elevator, int floor)
 {
     int i;
@@ -378,7 +428,7 @@ static void Elevator_UpdateSafetyState(Elevator *elevator)
 
     if (elevator->isOverloaded || elevator->isDoorBlocked)
     {
-        elevator->door = DOOR_OPEN;
+        Elevator_ForceDoorsOpenAtCurrentFloor(elevator);
         elevator->state = ELEVATOR_DOOR_HOLDING;
         elevator->direction = DIRECTION_NONE;
         return;
@@ -438,6 +488,8 @@ void Elevator_Init(Elevator *elevator)
     elevator->state = ELEVATOR_IDLE;
     elevator->direction = DIRECTION_NONE;
     elevator->door = DOOR_CLOSED;
+    elevator->carDoor = DOOR_CLOSED;
+    elevator->isAlignedWithFloor = 1;
     elevator->fault = FAULT_NONE;
     elevator->currentLoadKg = 0;
     elevator->isOverloaded = 0;
@@ -453,6 +505,8 @@ void Elevator_Init(Elevator *elevator)
         elevator->hallUpRequests[i] = 0;
         elevator->hallDownRequests[i] = 0;
         elevator->carFloorRequests[i] = 0;
+        elevator->landingDoors[i] = DOOR_CLOSED;
+        elevator->landingDoorLocked[i] = 1;
         elevator->hallUpRequestCreatedAt[i] = 0;
         elevator->hallDownRequestCreatedAt[i] = 0;
         elevator->carRequestCreatedAt[i] = 0;
@@ -479,6 +533,8 @@ void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
     snapshot->state = elevator->state;
     snapshot->direction = elevator->direction;
     snapshot->door = elevator->door;
+    snapshot->carDoor = elevator->carDoor;
+    snapshot->isAlignedWithFloor = elevator->isAlignedWithFloor;
     snapshot->fault = elevator->fault;
 
     snapshot->currentLoadKg = elevator->currentLoadKg;
@@ -497,6 +553,8 @@ void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
         snapshot->hallUpRequests[i] = elevator->hallUpRequests[i];
         snapshot->hallDownRequests[i] = elevator->hallDownRequests[i];
         snapshot->carFloorRequests[i] = elevator->carFloorRequests[i];
+        snapshot->landingDoors[i] = elevator->landingDoors[i];
+        snapshot->landingDoorLocked[i] = elevator->landingDoorLocked[i];
     }
 
     snapshot->completedRequestCount = elevator->completedRequestCount;
@@ -844,8 +902,11 @@ void Elevator_MoveOneFloor(Elevator *elevator)
     }
 
     elevator->state = ELEVATOR_MOVING;
+    elevator->isAlignedWithFloor = 0;
+    elevator->carDoor = DOOR_CLOSED;
     elevator->door = DOOR_CLOSED;
     elevator->totalTimeSeconds += MOVE_TIME_PER_FLOOR;
+    elevator->isAlignedWithFloor = 1;
 
     printf("[Move] Arrived at floor %d. Time +%ds, total %ds.\n",
            elevator->currentFloor,
@@ -939,15 +1000,27 @@ void Elevator_RunUntilIdle(Elevator *elevator)
 
 void Elevator_OpenDoor(Elevator *elevator)
 {
+    int index;
+
     if (elevator == NULL)
     {
         return;
     }
 
+    index = Elevator_GetCurrentFloorIndex(elevator);
+    if (index < 0 || !elevator->isAlignedWithFloor)
+    {
+        printf("[Safety] Cannot open doors before floor alignment is confirmed.\n");
+        return;
+    }
+
     elevator->state = ELEVATOR_DOOR_OPENING;
+    elevator->landingDoorLocked[index] = 0;
+    elevator->carDoor = DOOR_OPEN;
+    elevator->landingDoors[index] = DOOR_OPEN;
     elevator->door = DOOR_OPEN;
     elevator->totalTimeSeconds += DOOR_OPEN_TIME;
-    printf("[Door] Opening at floor %d. Time +%ds, total %ds.\n",
+    printf("[Door] Unlocking landing door and opening car/landing doors at floor %d. Time +%ds, total %ds.\n",
            elevator->currentFloor,
            DOOR_OPEN_TIME,
            elevator->totalTimeSeconds);
@@ -961,6 +1034,7 @@ void Elevator_HoldDoor(Elevator *elevator)
     }
 
     elevator->state = ELEVATOR_DOOR_HOLDING;
+    elevator->carDoor = DOOR_OPEN;
     elevator->door = DOOR_OPEN;
     elevator->totalTimeSeconds += DOOR_HOLD_TIME;
     printf("[Door] Holding open. Time +%ds, total %ds.\n",
@@ -970,7 +1044,15 @@ void Elevator_HoldDoor(Elevator *elevator)
 
 void Elevator_CloseDoor(Elevator *elevator)
 {
+    int index;
+
     if (elevator == NULL)
+    {
+        return;
+    }
+
+    index = Elevator_GetCurrentFloorIndex(elevator);
+    if (index < 0)
     {
         return;
     }
@@ -984,19 +1066,26 @@ void Elevator_CloseDoor(Elevator *elevator)
     }
 
     elevator->state = ELEVATOR_DOOR_CLOSING;
+    elevator->landingDoors[index] = DOOR_CLOSED;
+    elevator->carDoor = DOOR_CLOSED;
+    elevator->landingDoorLocked[index] = 1;
     elevator->door = DOOR_CLOSED;
     elevator->totalTimeSeconds += DOOR_CLOSE_TIME;
-    printf("[Door] Closing. Time +%ds, total %ds.\n",
+    printf("[Door] Closing car/landing doors and locking landing door. Time +%ds, total %ds.\n",
            DOOR_CLOSE_TIME,
            elevator->totalTimeSeconds);
 }
 
 void Elevator_PrintStatus(const Elevator *elevator)
 {
+    int currentIndex;
+
     if (elevator == NULL)
     {
         return;
     }
+
+    currentIndex = Elevator_GetCurrentFloorIndex(elevator);
 
     printf("\n--- Elevator Status ---\n");
     printf("Current floor : %d\n", elevator->currentFloor);
@@ -1008,6 +1097,14 @@ void Elevator_PrintStatus(const Elevator *elevator)
     printf("State         : %s\n", Elevator_GetStateName(elevator->state));
     printf("Direction     : %s\n", Elevator_GetDirectionName(elevator->direction));
     printf("Door          : %s\n", Elevator_GetDoorName(elevator->door));
+    printf("Car door      : %s\n", Elevator_GetDoorName(elevator->carDoor));
+    if (currentIndex >= 0)
+    {
+        printf("Landing door  : %s\n", Elevator_GetDoorName(elevator->landingDoors[currentIndex]));
+        printf("Landing locked: %s\n", elevator->landingDoorLocked[currentIndex] ? "Yes" : "No");
+    }
+    printf("Aligned floor : %s\n", elevator->isAlignedWithFloor ? "Yes" : "No");
+    printf("All doors safe: %s\n", Elevator_AreAllLandingDoorsLocked(elevator) ? "Yes" : "No");
     printf("Load          : %d/%d kg\n", elevator->currentLoadKg, MAX_LOAD_KG);
     printf("Door blocked  : %s\n", elevator->isDoorBlocked ? "Yes" : "No");
     printf("Admin paused  : %s\n", elevator->isAdminPaused ? "Yes" : "No");
@@ -1181,9 +1278,40 @@ int Elevator_CanMove(const Elevator *elevator)
         return 0;
     }
 
-    if (elevator->door != DOOR_CLOSED)
+    if (!elevator->isAlignedWithFloor)
     {
         return 0;
+    }
+
+    if (elevator->door != DOOR_CLOSED || elevator->carDoor != DOOR_CLOSED)
+    {
+        return 0;
+    }
+
+    if (!Elevator_AreAllLandingDoorsLocked(elevator))
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+int Elevator_AreAllLandingDoorsLocked(const Elevator *elevator)
+{
+    int i;
+
+    if (elevator == NULL)
+    {
+        return 0;
+    }
+
+    for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
+    {
+        if (elevator->landingDoors[i] != DOOR_CLOSED ||
+            !elevator->landingDoorLocked[i])
+        {
+            return 0;
+        }
     }
 
     return 1;
@@ -1207,6 +1335,11 @@ int Elevator_CanCloseDoor(const Elevator *elevator)
     }
 
     if (elevator->fault != FAULT_NONE)
+    {
+        return 0;
+    }
+
+    if (!elevator->isAlignedWithFloor)
     {
         return 0;
     }
@@ -1241,7 +1374,7 @@ void Elevator_SetLoad(Elevator *elevator, int loadKg)
 
     if (elevator->isOverloaded)
     {
-        elevator->door = DOOR_OPEN;
+        Elevator_ForceDoorsOpenAtCurrentFloor(elevator);
         printf("[Safety] Overload: %d kg. Door stays open.\n", loadKg);
     }
     else
@@ -1363,6 +1496,7 @@ void Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor)
     }
 
     elevator->isBetweenFloors = 1;
+    elevator->isAlignedWithFloor = 0;
     elevator->safeFloor = safeFloor;
     printf("[Recovery] Elevator is now simulated between floors. Nearest safe floor: %d.\n",
            safeFloor);
@@ -1401,6 +1535,7 @@ void Elevator_RunRecovery(Elevator *elevator)
         elevator->currentFloor = elevator->safeFloor;
         elevator->totalTimeSeconds += RECOVERY_MOVE_TIME;
         elevator->isBetweenFloors = 0;
+        elevator->isAlignedWithFloor = 1;
         printf("[Recovery] Reached safe floor %d. Time +%ds, total %ds.\n",
                elevator->currentFloor,
                RECOVERY_MOVE_TIME,
