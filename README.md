@@ -49,14 +49,16 @@ c-elevator-state-machine/
 │   └── elevator.h
 ├── src/
 │   ├── main.c
-│   └── elevator.c
+│   ├── elevator.c
+│   ├── elevator_status.c
+│   └── elevator_names.c
 ├── README.md
 └── .gitignore
 ```
 
 ## 版本进度
 
-当前已完成到 V4.10 内部安全按钮模型版，并已开始 V5 图形界面前置准备。
+当前已完成到 V4.11 结构拆分版，并已开始 V5 图形界面前置准备。
 
 | 版本 | 状态 | 主要内容 |
 | --- | --- | --- |
@@ -73,6 +75,7 @@ c-elevator-state-machine/
 | V4.8 | 已完成 | 区分轿厢门、层门、层门锁和楼层对齐状态 |
 | V4.9 | 已完成 | 区分主电源、突然停电和备用电源救援 |
 | V4.10 | 已完成 | 增加内部开门保持、关门按钮和紧急呼叫 |
+| V4.11 | 已完成 | 拆分状态输出和名称转换模块，降低核心文件复杂度 |
 | V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
 
 后续计划：
@@ -233,7 +236,9 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 项目会先保持这样的分层：
 
 - `include/elevator.h` 定义电梯核心数据结构、事件入口和状态快照；
-- `src/elevator.c` 只负责电梯状态机、调度、安全机制和统计；
+- `src/elevator.c` 负责电梯状态机、调度、安全机制和统计核心；
+- `src/elevator_status.c` 负责状态、请求和统计信息输出；
+- `src/elevator_names.c` 负责枚举值到可读文字的转换；
 - `src/main.c` 暂时作为命令行界面，负责接收用户输入；
 - 未来图形界面只负责显示状态、发送按钮事件，不直接修改电梯内部数据。
 
@@ -396,12 +401,29 @@ V4.10 暂不实现：
 
 如果多个状态同时出现，优先级更高的状态决定电梯是否允许移动、是否允许关门，以及状态面板显示的主要状态。
 
+## V4.11 功能
+
+当前版本开始整理工程结构，为后续图形界面和更复杂模拟做准备。
+
+已支持：
+
+- 将状态面板、请求列表和统计输出拆分到 `src/elevator_status.c`；
+- 将状态、方向、故障和门状态名称转换拆分到 `src/elevator_names.c`；
+- 保持 `src/elevator.c` 更专注于状态机、调度和安全逻辑；
+- 不改变现有菜单行为和电梯运行规则。
+
+V4.11 暂不实现：
+
+- 完整 GUI；
+- 多文件 Makefile；
+- 请求模块、门模块、电源模块的进一步拆分。
+
 ## 编译方式
 
 在项目根目录执行：
 
 ```powershell
-gcc -Iinclude src/main.c src/elevator.c -o elevator.exe
+gcc -Iinclude src/main.c src/elevator.c src/elevator_status.c src/elevator_names.c -o elevator.exe
 ```
 
 ## 运行方式
