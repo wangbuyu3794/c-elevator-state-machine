@@ -434,6 +434,8 @@ void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
     snapshot->isRecovering = elevator->isRecovering;
     snapshot->isBetweenFloors = elevator->isBetweenFloors;
     snapshot->safeFloor = elevator->safeFloor;
+    snapshot->canMove = Elevator_CanMove(elevator);
+    snapshot->canCloseDoor = Elevator_CanCloseDoor(elevator);
 
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
@@ -521,6 +523,21 @@ int Elevator_HasRequestAtFloor(const Elevator *elevator, int floor)
 }
 
 int Elevator_AddRequest(Elevator *elevator, int floor)
+{
+    return Elevator_AddCarRequest(elevator, floor);
+}
+
+int Elevator_PressHallUpButton(Elevator *elevator, int floor)
+{
+    return Elevator_AddHallUpRequest(elevator, floor);
+}
+
+int Elevator_PressHallDownButton(Elevator *elevator, int floor)
+{
+    return Elevator_AddHallDownRequest(elevator, floor);
+}
+
+int Elevator_PressCarFloorButton(Elevator *elevator, int floor)
 {
     return Elevator_AddCarRequest(elevator, floor);
 }

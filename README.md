@@ -237,11 +237,16 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 
 - `ElevatorSnapshot`：用于保存当前电梯状态的只读快照；
 - `Elevator_GetSnapshot`：把当前电梯状态复制到快照中，供未来界面层读取。
+- `canMove` 和 `canCloseDoor`：让界面层知道当前是否允许移动或关门；
+- `Elevator_PressHallUpButton`：外部上行按钮事件入口；
+- `Elevator_PressHallDownButton`：外部下行按钮事件入口；
+- `Elevator_PressCarFloorButton`：电梯内部楼层按钮事件入口。
 
 这个设计的目的：
 
 - 命令行界面和未来图形界面可以共用同一套电梯核心逻辑；
 - GUI 可以通过快照显示楼层、方向、门状态、安全状态、按钮灯和统计数据；
+- GUI 可以通过按钮事件入口发送用户操作，而不是直接修改请求表；
 - 后续如果使用 Java、网页或其他界面，也不需要重写电梯状态机。
 
 ## 编译方式

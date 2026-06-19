@@ -114,6 +114,8 @@ typedef struct
     int isRecovering;
     int isBetweenFloors;
     int safeFloor;
+    int canMove;
+    int canCloseDoor;
 
     int hallUpRequests[TOTAL_FLOOR_COUNT];
     int hallDownRequests[TOTAL_FLOOR_COUNT];
@@ -137,6 +139,9 @@ int Elevator_AddRequest(Elevator *elevator, int floor);
 int Elevator_AddHallUpRequest(Elevator *elevator, int floor);
 int Elevator_AddHallDownRequest(Elevator *elevator, int floor);
 int Elevator_AddCarRequest(Elevator *elevator, int floor);
+int Elevator_PressHallUpButton(Elevator *elevator, int floor);
+int Elevator_PressHallDownButton(Elevator *elevator, int floor);
+int Elevator_PressCarFloorButton(Elevator *elevator, int floor);
 int Elevator_ClearRequest(Elevator *elevator, int floor);
 int Elevator_IsValidHallUpFloor(int floor);
 int Elevator_IsValidHallDownFloor(int floor);
