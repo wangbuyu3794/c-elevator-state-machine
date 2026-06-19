@@ -90,7 +90,42 @@ typedef struct
     int longestWaitTimeSeconds;
 } Elevator;
 
+/*
+ * A snapshot is a read-only copy of the elevator state.
+ *
+ * The command-line menu can print it, and a future GUI can use it to draw
+ * the inside panel, outside floor buttons, request lights, and status display.
+ */
+typedef struct
+{
+    int currentFloor;
+    int targetFloor;
+    int totalTimeSeconds;
+    ElevatorState state;
+    ElevatorDirection direction;
+    DoorState door;
+    FaultType fault;
+
+    int currentLoadKg;
+    int isOverloaded;
+    int isDoorBlocked;
+    int isAdminPaused;
+    int isPowerOff;
+    int isRecovering;
+    int isBetweenFloors;
+    int safeFloor;
+
+    int hallUpRequests[TOTAL_FLOOR_COUNT];
+    int hallDownRequests[TOTAL_FLOOR_COUNT];
+    int carFloorRequests[TOTAL_FLOOR_COUNT];
+
+    int completedRequestCount;
+    int totalWaitTimeSeconds;
+    int longestWaitTimeSeconds;
+} ElevatorSnapshot;
+
 void Elevator_Init(Elevator *elevator);
+void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot);
 
 int Elevator_IsValidFloor(int floor);
 int Elevator_FloorToIndex(int floor);

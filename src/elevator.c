@@ -409,6 +409,44 @@ void Elevator_Init(Elevator *elevator)
     elevator->longestWaitTimeSeconds = 0;
 }
 
+void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
+{
+    int i;
+
+    if (elevator == NULL || snapshot == NULL)
+    {
+        return;
+    }
+
+    snapshot->currentFloor = elevator->currentFloor;
+    snapshot->targetFloor = elevator->targetFloor;
+    snapshot->totalTimeSeconds = elevator->totalTimeSeconds;
+    snapshot->state = elevator->state;
+    snapshot->direction = elevator->direction;
+    snapshot->door = elevator->door;
+    snapshot->fault = elevator->fault;
+
+    snapshot->currentLoadKg = elevator->currentLoadKg;
+    snapshot->isOverloaded = elevator->isOverloaded;
+    snapshot->isDoorBlocked = elevator->isDoorBlocked;
+    snapshot->isAdminPaused = elevator->isAdminPaused;
+    snapshot->isPowerOff = elevator->isPowerOff;
+    snapshot->isRecovering = elevator->isRecovering;
+    snapshot->isBetweenFloors = elevator->isBetweenFloors;
+    snapshot->safeFloor = elevator->safeFloor;
+
+    for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
+    {
+        snapshot->hallUpRequests[i] = elevator->hallUpRequests[i];
+        snapshot->hallDownRequests[i] = elevator->hallDownRequests[i];
+        snapshot->carFloorRequests[i] = elevator->carFloorRequests[i];
+    }
+
+    snapshot->completedRequestCount = elevator->completedRequestCount;
+    snapshot->totalWaitTimeSeconds = elevator->totalWaitTimeSeconds;
+    snapshot->longestWaitTimeSeconds = elevator->longestWaitTimeSeconds;
+}
+
 int Elevator_IsValidFloor(int floor)
 {
     return floor == MIN_FLOOR || (floor >= 1 && floor <= MAX_FLOOR);
