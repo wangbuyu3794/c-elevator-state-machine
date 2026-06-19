@@ -254,6 +254,22 @@ static void Elevator_ResetIdleTimer(Elevator *elevator)
     elevator->idleTimeSeconds = 0;
 }
 
+static void Elevator_ClearAllCarRequests(Elevator *elevator)
+{
+    int i;
+
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
+    {
+        elevator->carFloorRequests[i] = 0;
+        elevator->carRequestCreatedAt[i] = 0;
+    }
+}
+
 static void Elevator_RunIdleStep(Elevator *elevator)
 {
     if (elevator == NULL)
@@ -715,6 +731,12 @@ int Elevator_AddHallUpRequest(Elevator *elevator, int floor)
         return 0;
     }
 
+    if (!elevator->isMainPowerOn || elevator->isPowerOff)
+    {
+        printf("[Request] Hall up request ignored because main power is off.\n");
+        return 0;
+    }
+
     if (!Elevator_IsValidHallUpFloor(floor))
     {
         printf("[Request] Floor %d cannot make a hall up request.\n", floor);
@@ -750,6 +772,12 @@ int Elevator_AddHallDownRequest(Elevator *elevator, int floor)
         return 0;
     }
 
+    if (!elevator->isMainPowerOn || elevator->isPowerOff)
+    {
+        printf("[Request] Hall down request ignored because main power is off.\n");
+        return 0;
+    }
+
     if (!Elevator_IsValidHallDownFloor(floor))
     {
         printf("[Request] Floor %d cannot make a hall down request.\n", floor);
@@ -781,6 +809,12 @@ int Elevator_AddCarRequest(Elevator *elevator, int floor)
 
     if (elevator == NULL)
     {
+        return 0;
+    }
+
+    if (!elevator->isMainPowerOn || elevator->isPowerOff)
+    {
+        printf("[Request] Car floor request ignored because main power is off.\n");
         return 0;
     }
 
@@ -1641,6 +1675,7 @@ void Elevator_RunBackupRescue(Elevator *elevator)
 
     Elevator_OpenDoor(elevator);
     Elevator_HoldDoor(elevator);
+    Elevator_ClearAllCarRequests(elevator);
 
     elevator->isBackupPowerActive = 0;
     elevator->isRecovering = 0;
