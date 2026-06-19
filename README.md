@@ -53,6 +53,7 @@ c-elevator-state-machine/
 │   ├── elevator_request.c
 │   ├── elevator_door.c
 │   ├── elevator_power.c
+│   ├── elevator_safety.c
 │   ├── elevator_status.c
 │   └── elevator_names.c
 ├── README.md
@@ -83,6 +84,7 @@ c-elevator-state-machine/
 | V4.13 | 已完成 | 拆分轿厢门、层门、门锁和门按钮控制模块 |
 | V4.14 | 已完成 | 修复门已关闭时重复关门导致时间增加的问题 |
 | V4.15 | 已完成 | 拆分主电源、突然停电、备用电源救援和恢复流程模块 |
+| V4.16 | 已完成 | 拆分载重、故障、管理员暂停、紧急呼叫和移动安全判断模块 |
 | V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
 
 后续计划：
@@ -247,6 +249,7 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 - `src/elevator_request.c` 负责请求表、外部/内部按钮入口、目标选择和请求统计记录；
 - `src/elevator_door.c` 负责轿厢门、层门、门锁、开关门流程和门按钮；
 - `src/elevator_power.c` 负责主电源、突然停电、备用电源救援和安全恢复流程；
+- `src/elevator_safety.c` 负责载重、故障、管理员暂停、紧急呼叫和移动安全判断；
 - `src/elevator_status.c` 负责状态、请求和统计信息输出；
 - `src/elevator_names.c` 负责枚举值到可读文字的转换；
 - `src/main.c` 暂时作为命令行界面，负责接收用户输入；
@@ -500,12 +503,34 @@ V4.15 暂不实现：
 - 更精确的两层之间物理位置；
 - 维修人员确认流程。
 
+## V4.16 功能
+
+当前版本继续整理工程结构，把安全控制逻辑拆成独立模块。
+
+已支持：
+
+- 将统一安全状态更新拆分到 `src/elevator_safety.c`；
+- 将是否允许移动的安全判断拆分到安全模块；
+- 将载重和超重处理拆分到安全模块；
+- 将故障设置与故障清除拆分到安全模块；
+- 将管理员暂停与恢复拆分到安全模块；
+- 将紧急呼叫与清除紧急呼叫拆分到安全模块；
+- 保持 `src/elevator.c` 更专注于主状态机、初始化、快照、楼层换算和运行步骤；
+- 不改变现有菜单行为和电梯运行规则。
+
+V4.16 暂不实现：
+
+- 安全事件队列；
+- 安全事件优先级配置表；
+- 故障恢复确认流程；
+- 更细粒度的传感器故障模型。
+
 ## 编译方式
 
 在项目根目录执行：
 
 ```powershell
-gcc -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_power.c src/elevator_status.c src/elevator_names.c -o elevator.exe
+gcc -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_power.c src/elevator_safety.c src/elevator_status.c src/elevator_names.c -o elevator.exe
 ```
 
 ## 运行方式
