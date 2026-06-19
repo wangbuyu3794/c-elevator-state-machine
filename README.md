@@ -52,6 +52,7 @@ c-elevator-state-machine/
 │   ├── elevator.c
 │   ├── elevator_request.c
 │   ├── elevator_door.c
+│   ├── elevator_power.c
 │   ├── elevator_status.c
 │   └── elevator_names.c
 ├── README.md
@@ -81,6 +82,7 @@ c-elevator-state-machine/
 | V4.12 | 已完成 | 拆分请求表、按钮入口、目标选择和请求统计模块 |
 | V4.13 | 已完成 | 拆分轿厢门、层门、门锁和门按钮控制模块 |
 | V4.14 | 已完成 | 修复门已关闭时重复关门导致时间增加的问题 |
+| V4.15 | 已完成 | 拆分主电源、突然停电、备用电源救援和恢复流程模块 |
 | V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
 
 后续计划：
@@ -244,6 +246,7 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 - `src/elevator.c` 负责电梯状态机、调度、安全机制和统计核心；
 - `src/elevator_request.c` 负责请求表、外部/内部按钮入口、目标选择和请求统计记录；
 - `src/elevator_door.c` 负责轿厢门、层门、门锁、开关门流程和门按钮；
+- `src/elevator_power.c` 负责主电源、突然停电、备用电源救援和安全恢复流程；
 - `src/elevator_status.c` 负责状态、请求和统计信息输出；
 - `src/elevator_names.c` 负责枚举值到可读文字的转换；
 - `src/main.c` 暂时作为命令行界面，负责接收用户输入；
@@ -477,12 +480,32 @@ V4.13 暂不实现：
 - 避免因为重复按关门按钮导致 `totalTimeSeconds` 被错误增加；
 - 不改变其他门阻挡、开门保持、超重和安全优先级规则。
 
+## V4.15 功能
+
+当前版本继续整理工程结构，把电源和恢复逻辑拆成独立模块。
+
+已支持：
+
+- 将主电源关闭和恢复供电拆分到 `src/elevator_power.c`；
+- 将突然停电模拟拆分到电源模块；
+- 将备用电源救援流程拆分到电源模块；
+- 将楼层之间状态和安全恢复流程拆分到电源模块；
+- 保持 `src/elevator.c` 更专注于主状态机、安全优先级、载重、故障和管理员控制；
+- 不改变现有菜单行为和电梯运行规则。
+
+V4.15 暂不实现：
+
+- 备用电源电量消耗；
+- 备用电源故障；
+- 更精确的两层之间物理位置；
+- 维修人员确认流程。
+
 ## 编译方式
 
 在项目根目录执行：
 
 ```powershell
-gcc -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_status.c src/elevator_names.c -o elevator.exe
+gcc -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_power.c src/elevator_status.c src/elevator_names.c -o elevator.exe
 ```
 
 ## 运行方式
