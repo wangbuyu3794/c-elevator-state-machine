@@ -46,7 +46,8 @@
 ```text
 c-elevator-state-machine/
 ├── include/
-│   └── elevator.h
+│   ├── elevator.h
+│   └── elevator_internal.h
 ├── src/
 │   ├── main.c
 │   ├── elevator.c
@@ -86,6 +87,7 @@ c-elevator-state-machine/
 | V4.15 | 已完成 | 拆分主电源、突然停电、备用电源救援和恢复流程模块 |
 | V4.16 | 已完成 | 拆分载重、故障、管理员暂停、紧急呼叫和移动安全判断模块 |
 | V4.17 | 已完成 | 修复运行到空闲时覆盖安全状态的问题，并新增 Windows 构建脚本 |
+| V4.18 | 已完成 | 拆分公开头文件和内部模块协作头文件 |
 | V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
 
 后续计划：
@@ -246,6 +248,7 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 项目会先保持这样的分层：
 
 - `include/elevator.h` 定义电梯核心数据结构、事件入口和状态快照；
+- `include/elevator_internal.h` 定义仅供 `src/` 内部模块协作使用的函数声明；
 - `src/elevator.c` 负责电梯状态机、调度、安全机制和统计核心；
 - `src/elevator_request.c` 负责请求表、外部/内部按钮入口、目标选择和请求统计记录；
 - `src/elevator_door.c` 负责轿厢门、层门、门锁、开关门流程和门按钮；
@@ -544,6 +547,24 @@ V4.17 暂不实现：
 - Makefile；
 - 自动化测试脚本；
 - GUI 构建流程。
+
+## V4.18 功能
+
+当前版本整理头文件边界，为后续 GUI 接入做准备。
+
+已支持：
+
+- `include/elevator.h` 保留给命令行界面和未来 GUI 使用的公开接口；
+- 新增 `include/elevator_internal.h`，保存仅供 `src/` 内部模块协作使用的函数声明；
+- `src/*.c` 内部模块改为包含 `elevator_internal.h`；
+- `src/main.c` 继续只包含 `elevator.h`，模拟未来 GUI 只能访问公开 API；
+- 不改变现有菜单行为和电梯运行规则。
+
+V4.18 暂不实现：
+
+- 隐藏 `Elevator` 结构体内部字段；
+- 将模块拆成多个公开库；
+- GUI。
 
 ## 编译方式
 

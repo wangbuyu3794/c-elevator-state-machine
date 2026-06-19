@@ -1,4 +1,4 @@
-#include "elevator.h"
+#include "elevator_internal.h"
 
 const char *Elevator_GetStateName(ElevatorState state)
 {

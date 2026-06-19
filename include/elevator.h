@@ -175,12 +175,6 @@ int Elevator_ClearRequest(Elevator *elevator, int floor);
 int Elevator_IsValidHallUpFloor(int floor);
 int Elevator_IsValidHallDownFloor(int floor);
 
-int Elevator_FindNextTarget(const Elevator *elevator);
-int Elevator_ShouldServeCurrentFloor(const Elevator *elevator);
-int Elevator_ClearServedRequestsAtCurrentFloor(Elevator *elevator);
-void Elevator_RecordCompletedRequest(Elevator *elevator, int floor);
-void Elevator_ResetIdleTimer(Elevator *elevator);
-void Elevator_ClearAllCarRequests(Elevator *elevator);
 void Elevator_UpdateDirection(Elevator *elevator);
 void Elevator_MoveOneFloor(Elevator *elevator);
 void Elevator_RunOneStep(Elevator *elevator);
@@ -189,17 +183,12 @@ void Elevator_RunUntilIdle(Elevator *elevator);
 void Elevator_OpenDoor(Elevator *elevator);
 void Elevator_HoldDoor(Elevator *elevator);
 void Elevator_CloseDoor(Elevator *elevator);
-void Elevator_ForceDoorsOpenAtCurrentFloor(Elevator *elevator);
 void Elevator_PressDoorOpenButton(Elevator *elevator);
 void Elevator_ReleaseDoorOpenButton(Elevator *elevator);
 void Elevator_PressDoorCloseButton(Elevator *elevator);
 void Elevator_PressEmergencyCallButton(Elevator *elevator);
 void Elevator_ClearEmergencyCall(Elevator *elevator);
 
-int Elevator_CanMove(const Elevator *elevator);
-int Elevator_CanCloseDoor(const Elevator *elevator);
-int Elevator_AreAllLandingDoorsLocked(const Elevator *elevator);
-void Elevator_UpdateSafetyState(Elevator *elevator);
 void Elevator_SetLoad(Elevator *elevator, int loadKg);
 void Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked);
 void Elevator_SetFault(Elevator *elevator, FaultType fault);
@@ -217,10 +206,5 @@ void Elevator_RunRecovery(Elevator *elevator);
 void Elevator_PrintStatus(const Elevator *elevator);
 void Elevator_PrintRequests(const Elevator *elevator);
 void Elevator_PrintStats(const Elevator *elevator);
-
-const char *Elevator_GetStateName(ElevatorState state);
-const char *Elevator_GetDirectionName(ElevatorDirection direction);
-const char *Elevator_GetDoorName(DoorState door);
-const char *Elevator_GetFaultName(FaultType fault);
 
 #endif
