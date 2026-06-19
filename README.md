@@ -51,6 +51,7 @@ c-elevator-state-machine/
 │   ├── main.c
 │   ├── elevator.c
 │   ├── elevator_request.c
+│   ├── elevator_door.c
 │   ├── elevator_status.c
 │   └── elevator_names.c
 ├── README.md
@@ -78,6 +79,7 @@ c-elevator-state-machine/
 | V4.10 | 已完成 | 增加内部开门保持、关门按钮和紧急呼叫 |
 | V4.11 | 已完成 | 拆分状态输出和名称转换模块，降低核心文件复杂度 |
 | V4.12 | 已完成 | 拆分请求表、按钮入口、目标选择和请求统计模块 |
+| V4.13 | 已完成 | 拆分轿厢门、层门、门锁和门按钮控制模块 |
 | V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
 
 后续计划：
@@ -240,6 +242,7 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 - `include/elevator.h` 定义电梯核心数据结构、事件入口和状态快照；
 - `src/elevator.c` 负责电梯状态机、调度、安全机制和统计核心；
 - `src/elevator_request.c` 负责请求表、外部/内部按钮入口、目标选择和请求统计记录；
+- `src/elevator_door.c` 负责轿厢门、层门、门锁、开关门流程和门按钮；
 - `src/elevator_status.c` 负责状态、请求和统计信息输出；
 - `src/elevator_names.c` 负责枚举值到可读文字的转换；
 - `src/main.c` 暂时作为命令行界面，负责接收用户输入；
@@ -441,12 +444,33 @@ V4.12 暂不实现：
 - 外部请求和乘客目的地绑定；
 - 图形界面。
 
+## V4.13 功能
+
+当前版本继续整理工程结构，把门控逻辑拆成独立模块。
+
+已支持：
+
+- 将轿厢门、层门和层门锁相关操作拆分到 `src/elevator_door.c`；
+- 将开门、停留、关门流程拆分到门控模块；
+- 将内部开门按钮、内部关门按钮拆分到门控模块；
+- 将门阻挡设置和关门安全判断拆分到门控模块；
+- 将所有层门是否关闭并锁定的检查拆分到门控模块；
+- 保持 `src/elevator.c` 更专注于状态机、安全优先级、电源和恢复流程；
+- 不改变现有菜单行为和电梯运行规则。
+
+V4.13 暂不实现：
+
+- 门缝位置百分比；
+- 门锁传感器故障细分；
+- 层门被外力打开的异常模拟；
+- 门模块和安全模块的进一步分离。
+
 ## 编译方式
 
 在项目根目录执行：
 
 ```powershell
-gcc -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_status.c src/elevator_names.c -o elevator.exe
+gcc -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_status.c src/elevator_names.c -o elevator.exe
 ```
 
 ## 运行方式
