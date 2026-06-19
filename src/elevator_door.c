@@ -111,6 +111,15 @@ void Elevator_CloseDoor(Elevator *elevator)
         return;
     }
 
+    if (elevator->door == DOOR_CLOSED &&
+        elevator->carDoor == DOOR_CLOSED &&
+        elevator->landingDoors[index] == DOOR_CLOSED &&
+        elevator->landingDoorLocked[index])
+    {
+        printf("[Door] Doors are already closed and locked.\n");
+        return;
+    }
+
     if (!Elevator_CanCloseDoor(elevator))
     {
         printf("[Safety] Door closing blocked. Door will reopen and hold.\n");
