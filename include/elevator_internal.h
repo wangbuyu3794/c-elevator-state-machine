@@ -24,9 +24,4 @@ int Elevator_AreAllLandingDoorsLocked(const Elevator *elevator);
 int Elevator_CanMove(const Elevator *elevator);
 void Elevator_UpdateSafetyState(Elevator *elevator);
 
-const char *Elevator_GetStateName(ElevatorState state);
-const char *Elevator_GetDirectionName(ElevatorDirection direction);
-const char *Elevator_GetDoorName(DoorState door);
-const char *Elevator_GetFaultName(FaultType fault);
-
 #endif

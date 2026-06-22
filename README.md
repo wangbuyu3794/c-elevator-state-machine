@@ -88,6 +88,7 @@ c-elevator-state-machine/
 | V4.16 | 已完成 | 拆分载重、故障、管理员暂停、紧急呼叫和移动安全判断模块 |
 | V4.17 | 已完成 | 修复运行到空闲时覆盖安全状态的问题，并新增 Windows 构建脚本 |
 | V4.18 | 已完成 | 拆分公开头文件和内部模块协作头文件 |
+| V4.19 | 已完成 | 将状态、方向、门和故障名称转换函数作为公开显示 API |
 | V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
 
 后续计划：
@@ -267,6 +268,7 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 - `Elevator_PressHallUpButton`：外部上行按钮事件入口；
 - `Elevator_PressHallDownButton`：外部下行按钮事件入口；
 - `Elevator_PressCarFloorButton`：电梯内部楼层按钮事件入口。
+- `Elevator_GetStateName` / `Elevator_GetDirectionName` / `Elevator_GetDoorName` / `Elevator_GetFaultName`：供界面层显示可读状态文本。
 
 这个设计的目的：
 
@@ -565,6 +567,25 @@ V4.18 暂不实现：
 - 隐藏 `Elevator` 结构体内部字段；
 - 将模块拆成多个公开库；
 - GUI。
+
+## V4.19 功能
+
+当前版本继续做 GUI 前接口收尾。
+
+已支持：
+
+- 将 `Elevator_GetStateName` 作为公开显示 API；
+- 将 `Elevator_GetDirectionName` 作为公开显示 API；
+- 将 `Elevator_GetDoorName` 作为公开显示 API；
+- 将 `Elevator_GetFaultName` 作为公开显示 API；
+- 未来 GUI 可以直接把枚举值转换成可读文字，不需要重复写一套状态名称映射；
+- 不改变现有菜单行为和电梯运行规则。
+
+V4.19 暂不实现：
+
+- 多语言显示文本；
+- GUI 状态面板；
+- 自定义显示主题。
 
 ## 编译方式
 

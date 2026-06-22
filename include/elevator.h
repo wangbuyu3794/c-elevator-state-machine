@@ -207,4 +207,9 @@ void Elevator_PrintStatus(const Elevator *elevator);
 void Elevator_PrintRequests(const Elevator *elevator);
 void Elevator_PrintStats(const Elevator *elevator);
 
+const char *Elevator_GetStateName(ElevatorState state);
+const char *Elevator_GetDirectionName(ElevatorDirection direction);
+const char *Elevator_GetDoorName(DoorState door);
+const char *Elevator_GetFaultName(FaultType fault);
+
 #endif
