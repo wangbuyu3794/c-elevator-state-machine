@@ -73,7 +73,7 @@ int main(void)
                 printf("Invalid floor input. Program stopped.\n");
                 return 1;
             }
-            Elevator_AddCarRequest(&elevator, floor);
+            Elevator_PressCarFloorButton(&elevator, floor);
             break;
         case 2:
             Elevator_RunOneStep(&elevator);
@@ -165,7 +165,7 @@ int main(void)
                 printf("Invalid floor input. Program stopped.\n");
                 return 1;
             }
-            Elevator_AddHallUpRequest(&elevator, floor);
+            Elevator_PressHallUpButton(&elevator, floor);
             break;
         case 17:
             printf("Enter hall down floor (1-34): ");
@@ -174,7 +174,7 @@ int main(void)
                 printf("Invalid floor input. Program stopped.\n");
                 return 1;
             }
-            Elevator_AddHallDownRequest(&elevator, floor);
+            Elevator_PressHallDownButton(&elevator, floor);
             break;
         case 18:
             Elevator_SimulatePowerFailure(&elevator);

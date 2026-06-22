@@ -90,6 +90,7 @@ c-elevator-state-machine/
 | V4.18 | 已完成 | 拆分公开头文件和内部模块协作头文件 |
 | V4.19 | 已完成 | 将状态、方向、门和故障名称转换函数作为公开显示 API |
 | V5 Prep | 进行中 | 为后续图形界面整理状态快照和界面数据模型 |
+| V5 Prep 2 | 进行中 | 统一命令行菜单和未来 GUI 的按钮事件入口 |
 
 后续计划：
 
@@ -284,6 +285,22 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 
 当前命令行状态面板也开始通过 `Elevator_GetSnapshot` 读取状态。
 这相当于提前验证未来 GUI 的读取方式：界面层只拿快照，不直接计算核心内部状态。
+
+V5 Prep 2 继续整理界面事件边界。
+
+命令行菜单和未来 GUI 都应该通过以下事件入口操作电梯：
+
+- `Elevator_PressHallUpButton`：模拟某一层外部上行按钮；
+- `Elevator_PressHallDownButton`：模拟某一层外部下行按钮；
+- `Elevator_PressCarFloorButton`：模拟电梯内部楼层按钮；
+- `Elevator_PressDoorOpenButton`：模拟内部开门按钮按住；
+- `Elevator_ReleaseDoorOpenButton`：模拟内部开门按钮松开；
+- `Elevator_PressDoorCloseButton`：模拟内部关门按钮；
+- `Elevator_PressEmergencyCallButton`：模拟内部紧急呼叫按钮；
+- `Elevator_ClearEmergencyCall`：模拟清除紧急呼叫。
+
+命令行菜单已经改为调用这些按钮事件入口。
+未来 GUI 不应该直接修改请求表、门状态或安全状态，而应该发送按钮事件，再通过 `Elevator_GetSnapshot` 读取结果。
 
 ## V4.7 功能
 
