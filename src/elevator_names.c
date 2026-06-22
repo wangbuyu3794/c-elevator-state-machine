@@ -88,6 +88,10 @@ const char *Elevator_GetEventResultName(ElevatorEventResult result)
         return "Request already exists";
     case ELEVATOR_EVENT_POWER_OFF:
         return "Power is off";
+    case ELEVATOR_EVENT_DOOR_NOT_ALIGNED:
+        return "Door is not aligned with floor";
+    case ELEVATOR_EVENT_DOOR_CLOSE_BLOCKED:
+        return "Door close blocked";
     default:
         return "Unknown event result";
     }

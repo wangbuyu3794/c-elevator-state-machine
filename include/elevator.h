@@ -63,7 +63,9 @@ typedef enum
     ELEVATOR_EVENT_OK = 1,
     ELEVATOR_EVENT_INVALID_FLOOR = -1,
     ELEVATOR_EVENT_REQUEST_EXISTS = -2,
-    ELEVATOR_EVENT_POWER_OFF = -3
+    ELEVATOR_EVENT_POWER_OFF = -3,
+    ELEVATOR_EVENT_DOOR_NOT_ALIGNED = -4,
+    ELEVATOR_EVENT_DOOR_CLOSE_BLOCKED = -5
 } ElevatorEventResult;
 
 typedef struct
@@ -199,11 +201,11 @@ void Elevator_RunUntilIdle(Elevator *elevator);
 void Elevator_OpenDoor(Elevator *elevator);
 void Elevator_HoldDoor(Elevator *elevator);
 void Elevator_CloseDoor(Elevator *elevator);
-void Elevator_PressDoorOpenButton(Elevator *elevator);
-void Elevator_ReleaseDoorOpenButton(Elevator *elevator);
-void Elevator_PressDoorCloseButton(Elevator *elevator);
-void Elevator_PressEmergencyCallButton(Elevator *elevator);
-void Elevator_ClearEmergencyCall(Elevator *elevator);
+ElevatorEventResult Elevator_PressDoorOpenButton(Elevator *elevator);
+ElevatorEventResult Elevator_ReleaseDoorOpenButton(Elevator *elevator);
+ElevatorEventResult Elevator_PressDoorCloseButton(Elevator *elevator);
+ElevatorEventResult Elevator_PressEmergencyCallButton(Elevator *elevator);
+ElevatorEventResult Elevator_ClearEmergencyCall(Elevator *elevator);
 
 void Elevator_SetLoad(Elevator *elevator, int loadKg);
 void Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked);

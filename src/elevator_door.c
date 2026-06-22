@@ -210,11 +210,11 @@ int Elevator_CanCloseDoor(const Elevator *elevator)
     return 1;
 }
 
-void Elevator_PressDoorOpenButton(Elevator *elevator)
+ElevatorEventResult Elevator_PressDoorOpenButton(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isDoorOpenButtonHeld = 1;
@@ -224,30 +224,52 @@ void Elevator_PressDoorOpenButton(Elevator *elevator)
     {
         Elevator_ForceDoorsOpenAtCurrentFloor(elevator);
         elevator->state = ELEVATOR_DOOR_HOLDING;
+        return ELEVATOR_EVENT_OK;
     }
+
+    if (!elevator->isAlignedWithFloor)
+    {
+        return ELEVATOR_EVENT_DOOR_NOT_ALIGNED;
+    }
+
+    if (elevator->isPowerOff)
+    {
+        return ELEVATOR_EVENT_POWER_OFF;
+    }
+
+    return ELEVATOR_EVENT_DOOR_CLOSE_BLOCKED;
 }
 
-void Elevator_ReleaseDoorOpenButton(Elevator *elevator)
+ElevatorEventResult Elevator_ReleaseDoorOpenButton(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isDoorOpenButtonHeld = 0;
     printf("[Cabin] Door open button released.\n");
     Elevator_UpdateSafetyState(elevator);
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_PressDoorCloseButton(Elevator *elevator)
+ElevatorEventResult Elevator_PressDoorCloseButton(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     printf("[Cabin] Door close button pressed.\n");
+
+    if (!Elevator_CanCloseDoor(elevator))
+    {
+        Elevator_CloseDoor(elevator);
+        return ELEVATOR_EVENT_DOOR_CLOSE_BLOCKED;
+    }
+
     Elevator_CloseDoor(elevator);
+    return ELEVATOR_EVENT_OK;
 }
 
 void Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked)

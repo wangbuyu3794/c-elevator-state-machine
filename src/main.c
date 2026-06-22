@@ -196,19 +196,24 @@ int main(void)
             Elevator_RunBackupRescue(&elevator);
             break;
         case 21:
-            Elevator_PressDoorOpenButton(&elevator);
+            eventResult = Elevator_PressDoorOpenButton(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 22:
-            Elevator_ReleaseDoorOpenButton(&elevator);
+            eventResult = Elevator_ReleaseDoorOpenButton(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 23:
-            Elevator_PressDoorCloseButton(&elevator);
+            eventResult = Elevator_PressDoorCloseButton(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 24:
-            Elevator_PressEmergencyCallButton(&elevator);
+            eventResult = Elevator_PressEmergencyCallButton(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 25:
-            Elevator_ClearEmergencyCall(&elevator);
+            eventResult = Elevator_ClearEmergencyCall(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         default:
             printf("Unknown menu option.\n");

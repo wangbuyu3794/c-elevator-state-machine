@@ -117,28 +117,30 @@ int Elevator_CanMove(const Elevator *elevator)
     return 1;
 }
 
-void Elevator_PressEmergencyCallButton(Elevator *elevator)
+ElevatorEventResult Elevator_PressEmergencyCallButton(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isEmergencyCallActive = 1;
     Elevator_UpdateSafetyState(elevator);
     printf("[Emergency] Emergency call button pressed. Normal scheduling paused.\n");
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_ClearEmergencyCall(Elevator *elevator)
+ElevatorEventResult Elevator_ClearEmergencyCall(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isEmergencyCallActive = 0;
     Elevator_UpdateSafetyState(elevator);
     printf("[Emergency] Emergency call cleared.\n");
+    return ELEVATOR_EVENT_OK;
 }
 
 void Elevator_SetLoad(Elevator *elevator, int loadKg)

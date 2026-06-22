@@ -92,6 +92,7 @@ c-elevator-state-machine/
 | V5 Prep | 进行中 | 为后续图形界面整理状态快照和界面数据模型 |
 | V5 Prep 2 | 进行中 | 统一命令行菜单和未来 GUI 的按钮事件入口 |
 | V5 Prep 3 | 进行中 | 为请求类按钮事件增加可解释的结果码 |
+| V5 Prep 4 | 进行中 | 为内部门控和紧急呼叫按钮增加事件结果码 |
 
 后续计划：
 
@@ -329,6 +330,30 @@ V5 Prep 3 暂不覆盖：
 - 关门按钮；
 - 紧急呼叫按钮；
 - 电源和管理员控制事件。
+
+V5 Prep 4 继续扩展事件结果模型。
+
+当前内部安全按钮也会返回 `ElevatorEventResult`：
+
+- `Elevator_PressDoorOpenButton`；
+- `Elevator_ReleaseDoorOpenButton`；
+- `Elevator_PressDoorCloseButton`；
+- `Elevator_PressEmergencyCallButton`；
+- `Elevator_ClearEmergencyCall`。
+
+新增结果码：
+
+- `ELEVATOR_EVENT_DOOR_NOT_ALIGNED`：电梯没有与楼层对齐，不能正常开门；
+- `ELEVATOR_EVENT_DOOR_CLOSE_BLOCKED`：关门被安全条件阻止。
+
+命令行菜单会继续打印事件结果，未来 GUI 可以使用同一套结果码显示按钮反馈。
+
+V5 Prep 4 暂不覆盖：
+
+- 管理员暂停和恢复；
+- 主电源关闭和恢复；
+- 故障设置与清除；
+- 备用电源救援。
 
 ## V4.7 功能
 
