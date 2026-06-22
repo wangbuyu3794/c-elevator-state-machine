@@ -144,6 +144,43 @@ void Elevator_PrintStats(const Elevator *elevator)
     printf("Average wait  : %.2f seconds\n", snapshot.averageWaitTimeSeconds);
 }
 
+static int Elevator_ShouldShowCompactFloor(const ElevatorSnapshot *snapshot, int index)
+{
+    int floor;
+    int distanceFromCurrent;
+
+    if (snapshot == NULL || index < 0 || index >= TOTAL_FLOOR_COUNT)
+    {
+        return 0;
+    }
+
+    floor = Elevator_IndexToFloor(index);
+    distanceFromCurrent = floor - snapshot->currentFloor;
+    if (distanceFromCurrent < 0)
+    {
+        distanceFromCurrent = -distanceFromCurrent;
+    }
+
+    if (distanceFromCurrent <= 2)
+    {
+        return 1;
+    }
+
+    if (snapshot->targetFloor != NO_TARGET_FLOOR && floor == snapshot->targetFloor)
+    {
+        return 1;
+    }
+
+    if (floor == snapshot->safeFloor || floor == snapshot->rescueFloor)
+    {
+        return 1;
+    }
+
+    return snapshot->hallUpRequests[index] ||
+           snapshot->hallDownRequests[index] ||
+           snapshot->carFloorRequests[index];
+}
+
 void Elevator_PrintVisualPanel(const Elevator *elevator)
 {
     int i;
@@ -216,4 +253,93 @@ void Elevator_PrintVisualPanel(const Elevator *elevator)
     printf("------+-------+------+-----+------\n");
     printf("Legend: [E]=elevator, U=hall up, D=hall down, C=car request\n");
     printf("=============================\n\n");
+}
+
+void Elevator_PrintCompactVisualPanel(const Elevator *elevator)
+{
+    int i;
+    int floor;
+    int skippedFloorRows = 0;
+    ElevatorSnapshot snapshot;
+
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    Elevator_GetSnapshot(elevator, &snapshot);
+
+    printf("\n=== Compact Elevator Panel ===\n");
+    printf("Floor %d -> ", snapshot.currentFloor);
+    if (snapshot.targetFloor == NO_TARGET_FLOOR)
+    {
+        printf("No target");
+    }
+    else
+    {
+        printf("Target %d", snapshot.targetFloor);
+    }
+
+    printf(" | %s | %s | %ds\n",
+           Elevator_GetStateName(snapshot.state),
+           Elevator_GetDirectionName(snapshot.direction),
+           snapshot.totalTimeSeconds);
+    printf("Safety: move=%s close=%s power=%s emergency=%s fault=%s\n",
+           snapshot.canMove ? "yes" : "no",
+           snapshot.canCloseDoor ? "yes" : "no",
+           snapshot.isMainPowerOn ? "on" : "off",
+           snapshot.isEmergencyCallActive ? "yes" : "no",
+           Elevator_GetFaultName(snapshot.fault));
+    printf("\n");
+    printf("Floor | Shaft | Hall | Car | Door\n");
+    printf("------+-------+------+-----+------\n");
+
+    for (i = TOTAL_FLOOR_COUNT - 1; i >= 0; i--)
+    {
+        if (!Elevator_ShouldShowCompactFloor(&snapshot, i))
+        {
+            skippedFloorRows = 1;
+            continue;
+        }
+
+        if (skippedFloorRows)
+        {
+            printf("  ... |  ...  | .... | ... | ...\n");
+            skippedFloorRows = 0;
+        }
+
+        floor = Elevator_IndexToFloor(i);
+        printf("%5d |", floor);
+
+        if (floor == snapshot.currentFloor)
+        {
+            printf("  [E]  |");
+        }
+        else
+        {
+            printf("   .   |");
+        }
+
+        printf(" %c%c   |",
+               snapshot.hallUpRequests[i] ? 'U' : '.',
+               snapshot.hallDownRequests[i] ? 'D' : '.');
+        printf("  %c  |", snapshot.carFloorRequests[i] ? 'C' : '.');
+
+        if (floor == snapshot.currentFloor)
+        {
+            printf(" %s/%s",
+                   Elevator_GetDoorName(snapshot.currentLandingDoor),
+                   snapshot.currentLandingDoorLocked ? "Locked" : "Unlocked");
+        }
+        else
+        {
+            printf(" %s", snapshot.landingDoorLocked[i] ? "Locked" : "Unlocked");
+        }
+
+        printf("\n");
+    }
+
+    printf("------+-------+------+-----+------\n");
+    printf("Legend: [E]=elevator, U=hall up, D=hall down, C=car request\n");
+    printf("==============================\n\n");
 }

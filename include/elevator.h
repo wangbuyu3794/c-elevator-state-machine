@@ -237,6 +237,7 @@ void Elevator_PrintStatus(const Elevator *elevator);
 void Elevator_PrintRequests(const Elevator *elevator);
 void Elevator_PrintStats(const Elevator *elevator);
 void Elevator_PrintVisualPanel(const Elevator *elevator);
+void Elevator_PrintCompactVisualPanel(const Elevator *elevator);
 
 /* GUI-friendly display helpers */
 const char *Elevator_GetStateName(ElevatorState state);
