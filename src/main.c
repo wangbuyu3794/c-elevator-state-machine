@@ -33,8 +33,40 @@ static void PrintMenu(void)
     printf("26. Print visual panel\n");
     printf("27. Print compact visual panel\n");
     printf("28. Run one step with compact panel\n");
+    printf("29. Run until idle with compact panel\n");
     printf("0. Exit\n");
     printf("Choose: ");
+}
+
+static void RunUntilIdleWithCompactPanel(Elevator *elevator)
+{
+    ElevatorSnapshot snapshot;
+
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    while (Elevator_HasAnyRequest(elevator))
+    {
+        Elevator_GetSnapshot(elevator, &snapshot);
+        if (!snapshot.canMove)
+        {
+            printf("[Safety] Visual run stopped before all requests finished.\n");
+            Elevator_PrintCompactVisualPanel(elevator);
+            return;
+        }
+
+        Elevator_RunOneStep(elevator);
+
+        if (Elevator_HasAnyRequest(elevator))
+        {
+            Elevator_PrintCompactVisualPanel(elevator);
+        }
+    }
+
+    Elevator_RunUntilIdle(elevator);
+    Elevator_PrintCompactVisualPanel(elevator);
 }
 
 int main(void)
@@ -241,6 +273,9 @@ int main(void)
         case 28:
             Elevator_RunOneStep(&elevator);
             Elevator_PrintCompactVisualPanel(&elevator);
+            break;
+        case 29:
+            RunUntilIdleWithCompactPanel(&elevator);
             break;
         default:
             printf("Unknown menu option.\n");
