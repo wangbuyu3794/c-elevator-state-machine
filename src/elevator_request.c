@@ -73,6 +73,85 @@ static int Elevator_HasRequestBelow(const Elevator *elevator, int floor)
     return 0;
 }
 
+static int Elevator_FindNearestCarRequest(const Elevator *elevator)
+{
+    int i;
+    int floor;
+    int bestFloor = NO_TARGET_FLOOR;
+    int bestDistance = MAX_FLOOR - MIN_FLOOR + 1;
+
+    if (elevator == NULL)
+    {
+        return NO_TARGET_FLOOR;
+    }
+
+    for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
+    {
+        if (elevator->carFloorRequests[i])
+        {
+            int distance;
+
+            floor = Elevator_IndexToFloor(i);
+            distance = Elevator_Abs(floor - elevator->currentFloor);
+
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestFloor = floor;
+            }
+        }
+    }
+
+    return bestFloor;
+}
+
+static int Elevator_FindNearestDirectionCompatibleHallRequest(const Elevator *elevator)
+{
+    int i;
+    int floor;
+    int bestFloor = NO_TARGET_FLOOR;
+    int bestDistance = MAX_FLOOR - MIN_FLOOR + 1;
+
+    if (elevator == NULL)
+    {
+        return NO_TARGET_FLOOR;
+    }
+
+    for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
+    {
+        int isCompatible = 0;
+
+        floor = Elevator_IndexToFloor(i);
+
+        if (floor > elevator->currentFloor && elevator->hallUpRequests[i])
+        {
+            isCompatible = 1;
+        }
+        else if (floor < elevator->currentFloor && elevator->hallDownRequests[i])
+        {
+            isCompatible = 1;
+        }
+        else if (floor == elevator->currentFloor &&
+                 (elevator->hallUpRequests[i] || elevator->hallDownRequests[i]))
+        {
+            isCompatible = 1;
+        }
+
+        if (isCompatible)
+        {
+            int distance = Elevator_Abs(floor - elevator->currentFloor);
+
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestFloor = floor;
+            }
+        }
+    }
+
+    return bestFloor;
+}
+
 void Elevator_ResetIdleTimer(Elevator *elevator)
 {
     if (elevator == NULL)
@@ -530,6 +609,21 @@ int Elevator_FindNextTarget(const Elevator *elevator)
     if (elevator == NULL || !Elevator_HasAnyRequest(elevator))
     {
         return NO_TARGET_FLOOR;
+    }
+
+    if (elevator->direction == DIRECTION_NONE)
+    {
+        bestFloor = Elevator_FindNearestCarRequest(elevator);
+        if (bestFloor != NO_TARGET_FLOOR)
+        {
+            return bestFloor;
+        }
+
+        bestFloor = Elevator_FindNearestDirectionCompatibleHallRequest(elevator);
+        if (bestFloor != NO_TARGET_FLOOR)
+        {
+            return bestFloor;
+        }
     }
 
     if (elevator->direction == DIRECTION_UP)

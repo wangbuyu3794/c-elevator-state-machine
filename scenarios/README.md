@@ -44,7 +44,9 @@ Expected observations:
 - A hall up request at floor `6` is accepted.
 - A car request for floor `8` is accepted.
 - A hall down request at floor `3` is accepted.
-- The elevator should serve requests while respecting direction and pending work.
+- From floor `1`, the elevator should choose an upward task first.
+- The elevator should serve the `6` floor hall up request on the way to the `8` floor car request.
+- The `3` floor hall down request should wait until the elevator reverses direction.
 - The final statistics should show completed requests.
 
 ## 03_overload_blocks_run.txt
