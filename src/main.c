@@ -30,6 +30,7 @@ static void PrintMenu(void)
     printf("23. Press door close button\n");
     printf("24. Press emergency call button\n");
     printf("25. Clear emergency call\n");
+    printf("26. Print visual panel\n");
     printf("0. Exit\n");
     printf("Choose: ");
 }
@@ -228,6 +229,9 @@ int main(void)
         case 25:
             eventResult = Elevator_ClearEmergencyCall(&elevator);
             printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
+            break;
+        case 26:
+            Elevator_PrintVisualPanel(&elevator);
             break;
         default:
             printf("Unknown menu option.\n");

@@ -143,3 +143,77 @@ void Elevator_PrintStats(const Elevator *elevator)
     printf("Longest wait  : %d seconds\n", snapshot.longestWaitTimeSeconds);
     printf("Average wait  : %.2f seconds\n", snapshot.averageWaitTimeSeconds);
 }
+
+void Elevator_PrintVisualPanel(const Elevator *elevator)
+{
+    int i;
+    int floor;
+    ElevatorSnapshot snapshot;
+
+    if (elevator == NULL)
+    {
+        return;
+    }
+
+    Elevator_GetSnapshot(elevator, &snapshot);
+
+    printf("\n=== Elevator Visual Panel ===\n");
+    printf("State: %s | Direction: %s | Door: %s | Time: %ds\n",
+           Elevator_GetStateName(snapshot.state),
+           Elevator_GetDirectionName(snapshot.direction),
+           Elevator_GetDoorName(snapshot.door),
+           snapshot.totalTimeSeconds);
+    printf("Power: %s | Emergency: %s | Can move: %s | Requests: %s\n",
+           snapshot.isMainPowerOn ? "On" : "Off",
+           snapshot.isEmergencyCallActive ? "Yes" : "No",
+           snapshot.canMove ? "Yes" : "No",
+           snapshot.hasAnyRequest ? "Yes" : "No");
+    printf("\n");
+    printf("Floor | Shaft | Hall | Car | Door\n");
+    printf("------+-------+------+-----+------\n");
+
+    for (i = TOTAL_FLOOR_COUNT - 1; i >= 0; i--)
+    {
+        floor = Elevator_IndexToFloor(i);
+
+        printf("%5d |", floor);
+
+        if (floor == snapshot.currentFloor)
+        {
+            printf("  [E]  |");
+        }
+        else
+        {
+            printf("   .   |");
+        }
+
+        printf(" %c%c   |",
+               snapshot.hallUpRequests[i] ? 'U' : '.',
+               snapshot.hallDownRequests[i] ? 'D' : '.');
+
+        printf("  %c  |", snapshot.carFloorRequests[i] ? 'C' : '.');
+
+        if (floor == snapshot.currentFloor)
+        {
+            printf(" %s", Elevator_GetDoorName(snapshot.currentLandingDoor));
+            if (snapshot.currentLandingDoorLocked)
+            {
+                printf("/Locked");
+            }
+            else
+            {
+                printf("/Unlocked");
+            }
+        }
+        else
+        {
+            printf(" %s", snapshot.landingDoorLocked[i] ? "Locked" : "Unlocked");
+        }
+
+        printf("\n");
+    }
+
+    printf("------+-------+------+-----+------\n");
+    printf("Legend: [E]=elevator, U=hall up, D=hall down, C=car request\n");
+    printf("=============================\n\n");
+}
