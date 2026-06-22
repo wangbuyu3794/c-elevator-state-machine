@@ -58,6 +58,14 @@ c-elevator-state-machine/
 │   ├── elevator_status.c
 │   ├── elevator_names.c
 │   └── elevator_debug.c
+├── scenarios/
+│   ├── README.md
+│   ├── 01_single_car_request.txt
+│   ├── 02_multiple_direction_requests.txt
+│   ├── 03_overload_blocks_run.txt
+│   ├── 04_door_blocked_reopen.txt
+│   ├── 05_backup_power_rescue.txt
+│   └── 06_emergency_call_blocks_run.txt
 ├── README.md
 └── .gitignore
 ```
@@ -102,6 +110,7 @@ c-elevator-state-machine/
 | V5.4 | 进行中 | 新增连续运行并自动打印紧凑面板的调试入口 |
 | V5.5 | 进行中 | 新增刷新式连续紧凑面板调试入口 |
 | V5.6 | 进行中 | 拆分终端调试运行辅助模块 |
+| V5.7 | 进行中 | 新增手动验证场景和输入脚本 |
 
 后续计划：
 
@@ -539,6 +548,25 @@ V5.6 暂不实现：
 - 自动测试框架；
 - 多文件构建系统。
 
+## V5.7 功能
+
+当前版本新增手动验证场景。
+
+已支持：
+
+- 新增 `scenarios/` 文件夹；
+- 新增 `scenarios/README.md`，记录每个验证场景的目的、运行方式和期望观察点；
+- 新增多个 `.txt` 输入脚本，可配合 `run.bat` 做重复验证；
+- 覆盖单个内部请求、多个方向请求、超重、门阻挡、备用电源救援和紧急呼叫；
+- 不改变现有电梯运行逻辑。
+
+V5.7 暂不实现：
+
+- 自动断言测试；
+- 测试结果自动比对；
+- CI 流程；
+- 第三方测试框架。
+
 ## V4.7 功能
 
 当前版本加入了基础候机策略。
@@ -879,6 +907,28 @@ run.bat
 
 ```cmd
 type %TEMP%\c_elevator_state_machine_path.txt
+```
+
+## 场景验证
+
+项目提供了一组手动验证输入脚本，位于 `scenarios/`。
+
+先编译：
+
+```cmd
+build.bat
+```
+
+再运行某个场景，例如：
+
+```cmd
+run.bat < scenarios\01_single_car_request.txt
+```
+
+更多场景说明见：
+
+```cmd
+type scenarios\README.md
 ```
 
 ## 菜单说明
