@@ -108,3 +108,8 @@ const char *Elevator_GetEventResultName(ElevatorEventResult result)
         return "Unknown event result";
     }
 }
+
+int Elevator_IsEventSuccess(ElevatorEventResult result)
+{
+    return result == ELEVATOR_EVENT_OK;
+}

@@ -182,10 +182,12 @@ typedef struct
 void Elevator_Init(Elevator *elevator);
 void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot);
 
+/* Floor helpers */
 int Elevator_IsValidFloor(int floor);
 int Elevator_FloorToIndex(int floor);
 int Elevator_IndexToFloor(int index);
 
+/* Request state helpers and button events */
 int Elevator_HasAnyRequest(const Elevator *elevator);
 int Elevator_HasRequestAtFloor(const Elevator *elevator, int floor);
 ElevatorEventResult Elevator_AddRequest(Elevator *elevator, int floor);
@@ -199,11 +201,13 @@ int Elevator_ClearRequest(Elevator *elevator, int floor);
 int Elevator_IsValidHallUpFloor(int floor);
 int Elevator_IsValidHallDownFloor(int floor);
 
+/* Simulation step controls */
 void Elevator_UpdateDirection(Elevator *elevator);
 void Elevator_MoveOneFloor(Elevator *elevator);
 void Elevator_RunOneStep(Elevator *elevator);
 void Elevator_RunUntilIdle(Elevator *elevator);
 
+/* Door and cabin button events */
 void Elevator_OpenDoor(Elevator *elevator);
 void Elevator_HoldDoor(Elevator *elevator);
 void Elevator_CloseDoor(Elevator *elevator);
@@ -213,6 +217,7 @@ ElevatorEventResult Elevator_PressDoorCloseButton(Elevator *elevator);
 ElevatorEventResult Elevator_PressEmergencyCallButton(Elevator *elevator);
 ElevatorEventResult Elevator_ClearEmergencyCall(Elevator *elevator);
 
+/* Safety, management, and power controls */
 ElevatorEventResult Elevator_SetLoad(Elevator *elevator, int loadKg);
 ElevatorEventResult Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked);
 ElevatorEventResult Elevator_SetFault(Elevator *elevator, FaultType fault);
@@ -227,14 +232,17 @@ ElevatorEventResult Elevator_SetBackupPowerAvailable(Elevator *elevator, int isA
 ElevatorEventResult Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor);
 ElevatorEventResult Elevator_RunRecovery(Elevator *elevator);
 
+/* Command-line display helpers */
 void Elevator_PrintStatus(const Elevator *elevator);
 void Elevator_PrintRequests(const Elevator *elevator);
 void Elevator_PrintStats(const Elevator *elevator);
 
+/* GUI-friendly display helpers */
 const char *Elevator_GetStateName(ElevatorState state);
 const char *Elevator_GetDirectionName(ElevatorDirection direction);
 const char *Elevator_GetDoorName(DoorState door);
 const char *Elevator_GetFaultName(FaultType fault);
 const char *Elevator_GetEventResultName(ElevatorEventResult result);
+int Elevator_IsEventSuccess(ElevatorEventResult result);
 
 #endif

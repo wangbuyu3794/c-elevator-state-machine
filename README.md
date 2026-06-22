@@ -94,6 +94,7 @@ c-elevator-state-machine/
 | V5 Prep 3 | 进行中 | 为请求类按钮事件增加可解释的结果码 |
 | V5 Prep 4 | 进行中 | 为内部门控和紧急呼叫按钮增加事件结果码 |
 | V5 Prep 5 | 进行中 | 为管理、电源、故障和安全控制增加事件结果码 |
+| V5 Prep 6 | 进行中 | 明确 GUI 接入边界和公开 API 使用规则 |
 
 后续计划：
 
@@ -385,6 +386,32 @@ V5 Prep 5 继续把管理和电源类操作纳入统一事件结果模型。
 
 至此，命令行菜单中的主要控制操作都会打印事件结果。
 未来 GUI 可以统一使用返回值判断按钮操作是否成功，以及失败原因。
+
+## V5 Prep 6 功能
+
+当前版本对 GUI 接入边界做了一次收口。
+
+未来 GUI 应遵守三条规则：
+
+1. 只通过 `Elevator_GetSnapshot` 读取电梯状态；
+2. 只通过公开事件函数操作电梯；
+3. 只通过 `ElevatorEventResult`、`Elevator_GetEventResultName` 和 `Elevator_IsEventSuccess` 判断事件结果。
+
+已支持：
+
+- 新增 `Elevator_IsEventSuccess`，用于判断事件结果是否成功；
+- `include/elevator.h` 中的公开函数按用途分组；
+- GUI 可以从公开头文件中找到状态读取、按钮事件、管理事件、显示文本、事件结果判断等入口；
+- GUI 不需要包含 `elevator_internal.h`；
+- GUI 不需要直接访问 `src/` 内部模块函数。
+
+V5 Prep 6 暂不实现：
+
+- 真正的图形界面；
+- GUI 事件循环；
+- 多线程；
+- 鼠标点击处理；
+- 图形资源。
 
 ## V4.7 功能
 
