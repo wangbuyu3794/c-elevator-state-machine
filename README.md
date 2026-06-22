@@ -89,7 +89,7 @@ c-elevator-state-machine/
 | V4.17 | 已完成 | 修复运行到空闲时覆盖安全状态的问题，并新增 Windows 构建脚本 |
 | V4.18 | 已完成 | 拆分公开头文件和内部模块协作头文件 |
 | V4.19 | 已完成 | 将状态、方向、门和故障名称转换函数作为公开显示 API |
-| V5 Prep | 进行中 | 为后续图形界面准备状态快照接口 |
+| V5 Prep | 进行中 | 为后续图形界面整理状态快照和界面数据模型 |
 
 后续计划：
 
@@ -265,6 +265,11 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 - `ElevatorSnapshot`：用于保存当前电梯状态的只读快照；
 - `Elevator_GetSnapshot`：把当前电梯状态复制到快照中，供未来界面层读取。
 - `canMove` 和 `canCloseDoor`：让界面层知道当前是否允许移动或关门；
+- `currentFloorIndex` 和 `targetFloorIndex`：让界面层可以直接定位楼层数组；
+- `currentLandingDoor` 和 `currentLandingDoorLocked`：让界面层可以直接显示当前楼层层门状态；
+- `areAllLandingDoorsLocked`：让界面层可以显示整体门锁安全状态；
+- `hasAnyRequest`：让界面层可以判断当前是否还有待处理请求；
+- `averageWaitTimeSeconds`：让界面层可以直接显示平均等待时间；
 - `Elevator_PressHallUpButton`：外部上行按钮事件入口；
 - `Elevator_PressHallDownButton`：外部下行按钮事件入口；
 - `Elevator_PressCarFloorButton`：电梯内部楼层按钮事件入口。
@@ -276,6 +281,9 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 - GUI 可以通过快照显示楼层、方向、门状态、安全状态、按钮灯和统计数据；
 - GUI 可以通过按钮事件入口发送用户操作，而不是直接修改请求表；
 - 后续如果使用 Java、网页或其他界面，也不需要重写电梯状态机。
+
+当前命令行状态面板也开始通过 `Elevator_GetSnapshot` 读取状态。
+这相当于提前验证未来 GUI 的读取方式：界面层只拿快照，不直接计算核心内部状态。
 
 ## V4.7 功能
 

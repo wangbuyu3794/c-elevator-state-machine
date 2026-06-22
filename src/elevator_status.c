@@ -4,53 +4,56 @@
 
 void Elevator_PrintStatus(const Elevator *elevator)
 {
-    int currentIndex;
+    ElevatorSnapshot snapshot;
 
     if (elevator == NULL)
     {
         return;
     }
 
-    currentIndex = Elevator_FloorToIndex(elevator->currentFloor);
+    Elevator_GetSnapshot(elevator, &snapshot);
 
     printf("\n--- Elevator Status ---\n");
-    printf("Current floor : %d\n", elevator->currentFloor);
-    printf("Target floor  : %s", elevator->targetFloor == NO_TARGET_FLOOR ? "None\n" : "");
-    if (elevator->targetFloor != NO_TARGET_FLOOR)
+    printf("Current floor : %d\n", snapshot.currentFloor);
+    printf("Target floor  : %s", snapshot.targetFloor == NO_TARGET_FLOOR ? "None\n" : "");
+    if (snapshot.targetFloor != NO_TARGET_FLOOR)
     {
-        printf("%d\n", elevator->targetFloor);
+        printf("%d\n", snapshot.targetFloor);
     }
-    printf("State         : %s\n", Elevator_GetStateName(elevator->state));
-    printf("Direction     : %s\n", Elevator_GetDirectionName(elevator->direction));
-    printf("Door          : %s\n", Elevator_GetDoorName(elevator->door));
-    printf("Car door      : %s\n", Elevator_GetDoorName(elevator->carDoor));
-    if (currentIndex >= 0)
+    printf("State         : %s\n", Elevator_GetStateName(snapshot.state));
+    printf("Direction     : %s\n", Elevator_GetDirectionName(snapshot.direction));
+    printf("Door          : %s\n", Elevator_GetDoorName(snapshot.door));
+    printf("Car door      : %s\n", Elevator_GetDoorName(snapshot.carDoor));
+    if (snapshot.currentFloorIndex >= 0)
     {
-        printf("Landing door  : %s\n", Elevator_GetDoorName(elevator->landingDoors[currentIndex]));
-        printf("Landing locked: %s\n", elevator->landingDoorLocked[currentIndex] ? "Yes" : "No");
+        printf("Landing door  : %s\n", Elevator_GetDoorName(snapshot.currentLandingDoor));
+        printf("Landing locked: %s\n", snapshot.currentLandingDoorLocked ? "Yes" : "No");
     }
-    printf("Aligned floor : %s\n", elevator->isAlignedWithFloor ? "Yes" : "No");
-    printf("All doors safe: %s\n", Elevator_AreAllLandingDoorsLocked(elevator) ? "Yes" : "No");
-    printf("Load          : %d/%d kg\n", elevator->currentLoadKg, MAX_LOAD_KG);
-    printf("Door blocked  : %s\n", elevator->isDoorBlocked ? "Yes" : "No");
-    printf("Open held     : %s\n", elevator->isDoorOpenButtonHeld ? "Yes" : "No");
-    printf("Emergency call: %s\n", elevator->isEmergencyCallActive ? "Yes" : "No");
-    printf("Admin paused  : %s\n", elevator->isAdminPaused ? "Yes" : "No");
-    printf("Power off     : %s\n", elevator->isPowerOff ? "Yes" : "No");
-    printf("Main power    : %s\n", elevator->isMainPowerOn ? "On" : "Off");
-    printf("Power failure : %s\n", elevator->isPowerFailure ? "Yes" : "No");
-    printf("Backup power  : %s\n", elevator->isBackupPowerAvailable ? "Available" : "Unavailable");
-    printf("Backup active : %s\n", elevator->isBackupPowerActive ? "Yes" : "No");
-    printf("Recovering    : %s\n", elevator->isRecovering ? "Yes" : "No");
-    printf("Between floors: %s\n", elevator->isBetweenFloors ? "Yes" : "No");
-    printf("Safe floor    : %d\n", elevator->safeFloor);
-    printf("Rescue floor  : %d\n", elevator->rescueFloor);
+    printf("Aligned floor : %s\n", snapshot.isAlignedWithFloor ? "Yes" : "No");
+    printf("All doors safe: %s\n", snapshot.areAllLandingDoorsLocked ? "Yes" : "No");
+    printf("Load          : %d/%d kg\n", snapshot.currentLoadKg, MAX_LOAD_KG);
+    printf("Door blocked  : %s\n", snapshot.isDoorBlocked ? "Yes" : "No");
+    printf("Open held     : %s\n", snapshot.isDoorOpenButtonHeld ? "Yes" : "No");
+    printf("Emergency call: %s\n", snapshot.isEmergencyCallActive ? "Yes" : "No");
+    printf("Admin paused  : %s\n", snapshot.isAdminPaused ? "Yes" : "No");
+    printf("Power off     : %s\n", snapshot.isPowerOff ? "Yes" : "No");
+    printf("Main power    : %s\n", snapshot.isMainPowerOn ? "On" : "Off");
+    printf("Power failure : %s\n", snapshot.isPowerFailure ? "Yes" : "No");
+    printf("Backup power  : %s\n", snapshot.isBackupPowerAvailable ? "Available" : "Unavailable");
+    printf("Backup active : %s\n", snapshot.isBackupPowerActive ? "Yes" : "No");
+    printf("Recovering    : %s\n", snapshot.isRecovering ? "Yes" : "No");
+    printf("Between floors: %s\n", snapshot.isBetweenFloors ? "Yes" : "No");
+    printf("Safe floor    : %d\n", snapshot.safeFloor);
+    printf("Rescue floor  : %d\n", snapshot.rescueFloor);
     printf("Power fail dir: %s\n",
-           Elevator_GetDirectionName(elevator->directionBeforePowerFailure));
-    printf("Fault         : %s\n", Elevator_GetFaultName(elevator->fault));
-    printf("Total time    : %d seconds\n", elevator->totalTimeSeconds);
+           Elevator_GetDirectionName(snapshot.directionBeforePowerFailure));
+    printf("Fault         : %s\n", Elevator_GetFaultName(snapshot.fault));
+    printf("Can move      : %s\n", snapshot.canMove ? "Yes" : "No");
+    printf("Can close door: %s\n", snapshot.canCloseDoor ? "Yes" : "No");
+    printf("Has request   : %s\n", snapshot.hasAnyRequest ? "Yes" : "No");
+    printf("Total time    : %d seconds\n", snapshot.totalTimeSeconds);
     printf("Idle time     : %d/%d seconds\n",
-           elevator->idleTimeSeconds,
+           snapshot.idleTimeSeconds,
            IDLE_RETURN_DELAY_SECONDS);
     Elevator_PrintRequests(elevator);
     Elevator_PrintStats(elevator);
@@ -61,16 +64,19 @@ void Elevator_PrintRequests(const Elevator *elevator)
 {
     int i;
     int hasRequest = 0;
+    ElevatorSnapshot snapshot;
 
     if (elevator == NULL)
     {
         return;
     }
 
+    Elevator_GetSnapshot(elevator, &snapshot);
+
     printf("Hall up req   : ");
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
-        if (elevator->hallUpRequests[i])
+        if (snapshot.hallUpRequests[i])
         {
             printf("%d ", Elevator_IndexToFloor(i));
             hasRequest = 1;
@@ -88,7 +94,7 @@ void Elevator_PrintRequests(const Elevator *elevator)
     printf("Hall down req : ");
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
-        if (elevator->hallDownRequests[i])
+        if (snapshot.hallDownRequests[i])
         {
             printf("%d ", Elevator_IndexToFloor(i));
             hasRequest = 1;
@@ -106,7 +112,7 @@ void Elevator_PrintRequests(const Elevator *elevator)
     printf("Car floor req : ");
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
-        if (elevator->carFloorRequests[i])
+        if (snapshot.carFloorRequests[i])
         {
             printf("%d ", Elevator_IndexToFloor(i));
             hasRequest = 1;
@@ -123,23 +129,17 @@ void Elevator_PrintRequests(const Elevator *elevator)
 
 void Elevator_PrintStats(const Elevator *elevator)
 {
-    double averageWait;
+    ElevatorSnapshot snapshot;
 
     if (elevator == NULL)
     {
         return;
     }
 
-    printf("Completed req : %d\n", elevator->completedRequestCount);
-    printf("Total wait    : %d seconds\n", elevator->totalWaitTimeSeconds);
-    printf("Longest wait  : %d seconds\n", elevator->longestWaitTimeSeconds);
+    Elevator_GetSnapshot(elevator, &snapshot);
 
-    if (elevator->completedRequestCount == 0)
-    {
-        printf("Average wait  : 0.00 seconds\n");
-        return;
-    }
-
-    averageWait = (double)elevator->totalWaitTimeSeconds / elevator->completedRequestCount;
-    printf("Average wait  : %.2f seconds\n", averageWait);
+    printf("Completed req : %d\n", snapshot.completedRequestCount);
+    printf("Total wait    : %d seconds\n", snapshot.totalWaitTimeSeconds);
+    printf("Longest wait  : %d seconds\n", snapshot.longestWaitTimeSeconds);
+    printf("Average wait  : %.2f seconds\n", snapshot.averageWaitTimeSeconds);
 }

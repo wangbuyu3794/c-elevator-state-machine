@@ -136,6 +136,8 @@ void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
 
     snapshot->currentFloor = elevator->currentFloor;
     snapshot->targetFloor = elevator->targetFloor;
+    snapshot->currentFloorIndex = Elevator_FloorToIndex(elevator->currentFloor);
+    snapshot->targetFloorIndex = Elevator_FloorToIndex(elevator->targetFloor);
     snapshot->totalTimeSeconds = elevator->totalTimeSeconds;
     snapshot->idleTimeSeconds = elevator->idleTimeSeconds;
     snapshot->state = elevator->state;
@@ -163,6 +165,7 @@ void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
     snapshot->directionBeforePowerFailure = elevator->directionBeforePowerFailure;
     snapshot->canMove = Elevator_CanMove(elevator);
     snapshot->canCloseDoor = Elevator_CanCloseDoor(elevator);
+    snapshot->hasAnyRequest = Elevator_HasAnyRequest(elevator);
 
     for (i = 0; i < TOTAL_FLOOR_COUNT; i++)
     {
@@ -173,9 +176,30 @@ void Elevator_GetSnapshot(const Elevator *elevator, ElevatorSnapshot *snapshot)
         snapshot->landingDoorLocked[i] = elevator->landingDoorLocked[i];
     }
 
+    if (snapshot->currentFloorIndex >= 0)
+    {
+        snapshot->currentLandingDoor = snapshot->landingDoors[snapshot->currentFloorIndex];
+        snapshot->currentLandingDoorLocked = snapshot->landingDoorLocked[snapshot->currentFloorIndex];
+    }
+    else
+    {
+        snapshot->currentLandingDoor = DOOR_CLOSED;
+        snapshot->currentLandingDoorLocked = 0;
+    }
+
+    snapshot->areAllLandingDoorsLocked = Elevator_AreAllLandingDoorsLocked(elevator);
     snapshot->completedRequestCount = elevator->completedRequestCount;
     snapshot->totalWaitTimeSeconds = elevator->totalWaitTimeSeconds;
     snapshot->longestWaitTimeSeconds = elevator->longestWaitTimeSeconds;
+    if (elevator->completedRequestCount == 0)
+    {
+        snapshot->averageWaitTimeSeconds = 0.0;
+    }
+    else
+    {
+        snapshot->averageWaitTimeSeconds =
+            (double)elevator->totalWaitTimeSeconds / elevator->completedRequestCount;
+    }
 }
 
 int Elevator_IsValidFloor(int floor)

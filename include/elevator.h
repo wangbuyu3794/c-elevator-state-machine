@@ -116,6 +116,8 @@ typedef struct
 {
     int currentFloor;
     int targetFloor;
+    int currentFloorIndex;
+    int targetFloorIndex;
     int totalTimeSeconds;
     int idleTimeSeconds;
     ElevatorState state;
@@ -124,6 +126,9 @@ typedef struct
     DoorState carDoor;
     DoorState landingDoors[TOTAL_FLOOR_COUNT];
     int landingDoorLocked[TOTAL_FLOOR_COUNT];
+    DoorState currentLandingDoor;
+    int currentLandingDoorLocked;
+    int areAllLandingDoorsLocked;
     int isAlignedWithFloor;
     FaultType fault;
 
@@ -149,10 +154,12 @@ typedef struct
     int hallUpRequests[TOTAL_FLOOR_COUNT];
     int hallDownRequests[TOTAL_FLOOR_COUNT];
     int carFloorRequests[TOTAL_FLOOR_COUNT];
+    int hasAnyRequest;
 
     int completedRequestCount;
     int totalWaitTimeSeconds;
     int longestWaitTimeSeconds;
+    double averageWaitTimeSeconds;
 } ElevatorSnapshot;
 
 void Elevator_Init(Elevator *elevator);
