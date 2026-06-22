@@ -32,6 +32,7 @@ static void PrintMenu(void)
     printf("25. Clear emergency call\n");
     printf("26. Print visual panel\n");
     printf("27. Print compact visual panel\n");
+    printf("28. Run one step with compact panel\n");
     printf("0. Exit\n");
     printf("Choose: ");
 }
@@ -235,6 +236,10 @@ int main(void)
             Elevator_PrintVisualPanel(&elevator);
             break;
         case 27:
+            Elevator_PrintCompactVisualPanel(&elevator);
+            break;
+        case 28:
+            Elevator_RunOneStep(&elevator);
             Elevator_PrintCompactVisualPanel(&elevator);
             break;
         default:
