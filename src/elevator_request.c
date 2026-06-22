@@ -350,22 +350,22 @@ int Elevator_HasRequestAtFloor(const Elevator *elevator, int floor)
     return Elevator_HasRequestAtIndex(elevator, index);
 }
 
-int Elevator_AddRequest(Elevator *elevator, int floor)
+ElevatorEventResult Elevator_AddRequest(Elevator *elevator, int floor)
 {
     return Elevator_AddCarRequest(elevator, floor);
 }
 
-int Elevator_PressHallUpButton(Elevator *elevator, int floor)
+ElevatorEventResult Elevator_PressHallUpButton(Elevator *elevator, int floor)
 {
     return Elevator_AddHallUpRequest(elevator, floor);
 }
 
-int Elevator_PressHallDownButton(Elevator *elevator, int floor)
+ElevatorEventResult Elevator_PressHallDownButton(Elevator *elevator, int floor)
 {
     return Elevator_AddHallDownRequest(elevator, floor);
 }
 
-int Elevator_PressCarFloorButton(Elevator *elevator, int floor)
+ElevatorEventResult Elevator_PressCarFloorButton(Elevator *elevator, int floor)
 {
     return Elevator_AddCarRequest(elevator, floor);
 }
@@ -380,120 +380,120 @@ int Elevator_IsValidHallDownFloor(int floor)
     return floor > MIN_FLOOR && floor <= MAX_FLOOR && floor != 0;
 }
 
-int Elevator_AddHallUpRequest(Elevator *elevator, int floor)
+ElevatorEventResult Elevator_AddHallUpRequest(Elevator *elevator, int floor)
 {
     int index;
 
     if (elevator == NULL)
     {
-        return 0;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (!elevator->isMainPowerOn || elevator->isPowerOff)
     {
         printf("[Request] Hall up request ignored because main power is off.\n");
-        return 0;
+        return ELEVATOR_EVENT_POWER_OFF;
     }
 
     if (!Elevator_IsValidHallUpFloor(floor))
     {
         printf("[Request] Floor %d cannot make a hall up request.\n", floor);
-        return 0;
+        return ELEVATOR_EVENT_INVALID_FLOOR;
     }
 
     index = Elevator_FloorToIndex(floor);
     if (index < 0)
     {
         printf("[Request] Floor %d is invalid.\n", floor);
-        return 0;
+        return ELEVATOR_EVENT_INVALID_FLOOR;
     }
 
     if (elevator->hallUpRequests[index])
     {
         printf("[Request] Hall up request at floor %d already exists.\n", floor);
-        return 0;
+        return ELEVATOR_EVENT_REQUEST_EXISTS;
     }
 
     elevator->hallUpRequests[index] = 1;
     elevator->hallUpRequestCreatedAt[index] = elevator->totalTimeSeconds;
     Elevator_ResetIdleTimer(elevator);
     printf("[Request] Added hall up request at floor %d.\n", floor);
-    return 1;
+    return ELEVATOR_EVENT_OK;
 }
 
-int Elevator_AddHallDownRequest(Elevator *elevator, int floor)
+ElevatorEventResult Elevator_AddHallDownRequest(Elevator *elevator, int floor)
 {
     int index;
 
     if (elevator == NULL)
     {
-        return 0;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (!elevator->isMainPowerOn || elevator->isPowerOff)
     {
         printf("[Request] Hall down request ignored because main power is off.\n");
-        return 0;
+        return ELEVATOR_EVENT_POWER_OFF;
     }
 
     if (!Elevator_IsValidHallDownFloor(floor))
     {
         printf("[Request] Floor %d cannot make a hall down request.\n", floor);
-        return 0;
+        return ELEVATOR_EVENT_INVALID_FLOOR;
     }
 
     index = Elevator_FloorToIndex(floor);
     if (index < 0)
     {
-        return 0;
+        return ELEVATOR_EVENT_INVALID_FLOOR;
     }
 
     if (elevator->hallDownRequests[index])
     {
         printf("[Request] Hall down request at floor %d already exists.\n", floor);
-        return 0;
+        return ELEVATOR_EVENT_REQUEST_EXISTS;
     }
 
     elevator->hallDownRequests[index] = 1;
     elevator->hallDownRequestCreatedAt[index] = elevator->totalTimeSeconds;
     Elevator_ResetIdleTimer(elevator);
     printf("[Request] Added hall down request at floor %d.\n", floor);
-    return 1;
+    return ELEVATOR_EVENT_OK;
 }
 
-int Elevator_AddCarRequest(Elevator *elevator, int floor)
+ElevatorEventResult Elevator_AddCarRequest(Elevator *elevator, int floor)
 {
     int index;
 
     if (elevator == NULL)
     {
-        return 0;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (!elevator->isMainPowerOn || elevator->isPowerOff)
     {
         printf("[Request] Car floor request ignored because main power is off.\n");
-        return 0;
+        return ELEVATOR_EVENT_POWER_OFF;
     }
 
     index = Elevator_FloorToIndex(floor);
     if (index < 0)
     {
         printf("[Request] Floor %d is invalid.\n", floor);
-        return 0;
+        return ELEVATOR_EVENT_INVALID_FLOOR;
     }
 
     if (elevator->carFloorRequests[index])
     {
         printf("[Request] Car request for floor %d already exists.\n", floor);
-        return 0;
+        return ELEVATOR_EVENT_REQUEST_EXISTS;
     }
 
     elevator->carFloorRequests[index] = 1;
     elevator->carRequestCreatedAt[index] = elevator->totalTimeSeconds;
     Elevator_ResetIdleTimer(elevator);
     printf("[Request] Added car request for floor %d.\n", floor);
-    return 1;
+    return ELEVATOR_EVENT_OK;
 }
 
 int Elevator_ClearRequest(Elevator *elevator, int floor)

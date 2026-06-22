@@ -91,6 +91,7 @@ c-elevator-state-machine/
 | V4.19 | 已完成 | 将状态、方向、门和故障名称转换函数作为公开显示 API |
 | V5 Prep | 进行中 | 为后续图形界面整理状态快照和界面数据模型 |
 | V5 Prep 2 | 进行中 | 统一命令行菜单和未来 GUI 的按钮事件入口 |
+| V5 Prep 3 | 进行中 | 为请求类按钮事件增加可解释的结果码 |
 
 后续计划：
 
@@ -301,6 +302,33 @@ V5 Prep 2 继续整理界面事件边界。
 
 命令行菜单已经改为调用这些按钮事件入口。
 未来 GUI 不应该直接修改请求表、门状态或安全状态，而应该发送按钮事件，再通过 `Elevator_GetSnapshot` 读取结果。
+
+V5 Prep 3 开始整理事件返回结果。
+
+当前请求类按钮事件会返回 `ElevatorEventResult`：
+
+- `ELEVATOR_EVENT_OK`：事件处理成功；
+- `ELEVATOR_EVENT_NULL_ELEVATOR`：传入的电梯对象为空；
+- `ELEVATOR_EVENT_INVALID_FLOOR`：楼层不合法，或该楼层没有对应方向按钮；
+- `ELEVATOR_EVENT_REQUEST_EXISTS`：同类型请求已经存在；
+- `ELEVATOR_EVENT_POWER_OFF`：主电源关闭或电梯处于断电状态，普通请求被拒绝。
+
+同时新增 `Elevator_GetEventResultName`，未来 GUI 可以把结果码转换为可读文本。
+命令行菜单的请求类按钮也会打印事件结果，方便验证未来 GUI 能拿到的提示内容。
+
+当前已覆盖：
+
+- `Elevator_PressHallUpButton`；
+- `Elevator_PressHallDownButton`；
+- `Elevator_PressCarFloorButton`；
+- 兼容入口 `Elevator_AddRequest`、`Elevator_AddHallUpRequest`、`Elevator_AddHallDownRequest`、`Elevator_AddCarRequest`。
+
+V5 Prep 3 暂不覆盖：
+
+- 开门按钮；
+- 关门按钮；
+- 紧急呼叫按钮；
+- 电源和管理员控制事件。
 
 ## V4.7 功能
 

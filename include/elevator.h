@@ -57,6 +57,15 @@ typedef enum
     FAULT_UNKNOWN
 } FaultType;
 
+typedef enum
+{
+    ELEVATOR_EVENT_NULL_ELEVATOR = 0,
+    ELEVATOR_EVENT_OK = 1,
+    ELEVATOR_EVENT_INVALID_FLOOR = -1,
+    ELEVATOR_EVENT_REQUEST_EXISTS = -2,
+    ELEVATOR_EVENT_POWER_OFF = -3
+} ElevatorEventResult;
+
 typedef struct
 {
     int currentFloor;
@@ -171,13 +180,13 @@ int Elevator_IndexToFloor(int index);
 
 int Elevator_HasAnyRequest(const Elevator *elevator);
 int Elevator_HasRequestAtFloor(const Elevator *elevator, int floor);
-int Elevator_AddRequest(Elevator *elevator, int floor);
-int Elevator_AddHallUpRequest(Elevator *elevator, int floor);
-int Elevator_AddHallDownRequest(Elevator *elevator, int floor);
-int Elevator_AddCarRequest(Elevator *elevator, int floor);
-int Elevator_PressHallUpButton(Elevator *elevator, int floor);
-int Elevator_PressHallDownButton(Elevator *elevator, int floor);
-int Elevator_PressCarFloorButton(Elevator *elevator, int floor);
+ElevatorEventResult Elevator_AddRequest(Elevator *elevator, int floor);
+ElevatorEventResult Elevator_AddHallUpRequest(Elevator *elevator, int floor);
+ElevatorEventResult Elevator_AddHallDownRequest(Elevator *elevator, int floor);
+ElevatorEventResult Elevator_AddCarRequest(Elevator *elevator, int floor);
+ElevatorEventResult Elevator_PressHallUpButton(Elevator *elevator, int floor);
+ElevatorEventResult Elevator_PressHallDownButton(Elevator *elevator, int floor);
+ElevatorEventResult Elevator_PressCarFloorButton(Elevator *elevator, int floor);
 int Elevator_ClearRequest(Elevator *elevator, int floor);
 int Elevator_IsValidHallUpFloor(int floor);
 int Elevator_IsValidHallDownFloor(int floor);
@@ -218,5 +227,6 @@ const char *Elevator_GetStateName(ElevatorState state);
 const char *Elevator_GetDirectionName(ElevatorDirection direction);
 const char *Elevator_GetDoorName(DoorState door);
 const char *Elevator_GetFaultName(FaultType fault);
+const char *Elevator_GetEventResultName(ElevatorEventResult result);
 
 #endif

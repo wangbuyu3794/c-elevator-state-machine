@@ -73,3 +73,22 @@ const char *Elevator_GetDoorName(DoorState door)
         return "Unknown";
     }
 }
+
+const char *Elevator_GetEventResultName(ElevatorEventResult result)
+{
+    switch (result)
+    {
+    case ELEVATOR_EVENT_OK:
+        return "OK";
+    case ELEVATOR_EVENT_NULL_ELEVATOR:
+        return "Null elevator";
+    case ELEVATOR_EVENT_INVALID_FLOOR:
+        return "Invalid floor";
+    case ELEVATOR_EVENT_REQUEST_EXISTS:
+        return "Request already exists";
+    case ELEVATOR_EVENT_POWER_OFF:
+        return "Power is off";
+    default:
+        return "Unknown event result";
+    }
+}
