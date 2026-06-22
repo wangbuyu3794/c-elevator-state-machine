@@ -56,7 +56,8 @@ c-elevator-state-machine/
 │   ├── elevator_power.c
 │   ├── elevator_safety.c
 │   ├── elevator_status.c
-│   └── elevator_names.c
+│   ├── elevator_names.c
+│   └── elevator_debug.c
 ├── README.md
 └── .gitignore
 ```
@@ -100,6 +101,7 @@ c-elevator-state-machine/
 | V5.3 | 进行中 | 新增单步运行并自动打印紧凑面板的调试入口 |
 | V5.4 | 进行中 | 新增连续运行并自动打印紧凑面板的调试入口 |
 | V5.5 | 进行中 | 新增刷新式连续紧凑面板调试入口 |
+| V5.6 | 进行中 | 拆分终端调试运行辅助模块 |
 
 后续计划：
 
@@ -267,6 +269,7 @@ V5 不会直接把图形界面和电梯核心逻辑混在一起。
 - `src/elevator_safety.c` 负责载重、故障、管理员暂停、紧急呼叫和移动安全判断；
 - `src/elevator_status.c` 负责状态、请求和统计信息输出；
 - `src/elevator_names.c` 负责枚举值到可读文字的转换；
+- `src/elevator_debug.c` 负责终端可视化调试运行辅助函数；
 - `src/main.c` 暂时作为命令行界面，负责接收用户输入；
 - 未来图形界面只负责显示状态、发送按钮事件，不直接修改电梯内部数据。
 
@@ -516,6 +519,25 @@ V5.5 暂不实现：
 - 暂停/继续播放；
 - 彩色输出；
 - 鼠标点击。
+
+## V5.6 功能
+
+当前版本整理命令行调试代码结构。
+
+已支持：
+
+- 新增 `src/elevator_debug.c`；
+- 将连续紧凑面板运行逻辑从 `src/main.c` 拆分到调试模块；
+- `src/main.c` 继续专注于菜单、输入和事件调用；
+- `build.bat` 增加 `src/elevator_debug.c` 编译入口；
+- 不改变 `29` 和 `30` 的菜单行为。
+
+V5.6 暂不实现：
+
+- 新的电梯业务逻辑；
+- 图形界面；
+- 自动测试框架；
+- 多文件构建系统。
 
 ## V4.7 功能
 
@@ -840,7 +862,7 @@ build.bat
 如果想手动输入完整编译命令，也可以执行：
 
 ```cmd
-gcc -Wall -Wextra -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_power.c src/elevator_safety.c src/elevator_status.c src/elevator_names.c -o %TEMP%\c_elevator_state_machine.exe
+gcc -Wall -Wextra -Iinclude src/main.c src/elevator.c src/elevator_request.c src/elevator_door.c src/elevator_power.c src/elevator_safety.c src/elevator_status.c src/elevator_names.c src/elevator_debug.c -o %TEMP%\c_elevator_state_machine.exe
 ```
 
 ## 运行方式

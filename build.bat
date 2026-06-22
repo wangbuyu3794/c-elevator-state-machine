@@ -13,6 +13,7 @@ gcc -Wall -Wextra -Iinclude ^
     src\elevator_safety.c ^
     src\elevator_status.c ^
     src\elevator_names.c ^
+    src\elevator_debug.c ^
     -o "%OUTPUT%"
 
 if errorlevel 1 (

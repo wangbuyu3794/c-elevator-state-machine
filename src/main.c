@@ -1,7 +1,6 @@
 #include "elevator.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 
 static void PrintMenu(void)
 {
@@ -38,80 +37,6 @@ static void PrintMenu(void)
     printf("30. Run until idle with refreshed compact panel\n");
     printf("0. Exit\n");
     printf("Choose: ");
-}
-
-static void ClearConsole(void)
-{
-#ifdef _WIN32
-    system("cls");
-#else
-    printf("\033[2J\033[H");
-#endif
-}
-
-static void RunUntilIdleWithCompactPanel(Elevator *elevator)
-{
-    ElevatorSnapshot snapshot;
-
-    if (elevator == NULL)
-    {
-        return;
-    }
-
-    while (Elevator_HasAnyRequest(elevator))
-    {
-        Elevator_GetSnapshot(elevator, &snapshot);
-        if (!snapshot.canMove)
-        {
-            printf("[Safety] Visual run stopped before all requests finished.\n");
-            Elevator_PrintCompactVisualPanel(elevator);
-            return;
-        }
-
-        Elevator_RunOneStep(elevator);
-
-        if (Elevator_HasAnyRequest(elevator))
-        {
-            Elevator_PrintCompactVisualPanel(elevator);
-        }
-    }
-
-    Elevator_RunUntilIdle(elevator);
-    Elevator_PrintCompactVisualPanel(elevator);
-}
-
-static void RunUntilIdleWithRefreshedCompactPanel(Elevator *elevator)
-{
-    ElevatorSnapshot snapshot;
-
-    if (elevator == NULL)
-    {
-        return;
-    }
-
-    while (Elevator_HasAnyRequest(elevator))
-    {
-        Elevator_GetSnapshot(elevator, &snapshot);
-        if (!snapshot.canMove)
-        {
-            ClearConsole();
-            printf("[Safety] Refreshed visual run stopped before all requests finished.\n");
-            Elevator_PrintCompactVisualPanel(elevator);
-            return;
-        }
-
-        Elevator_RunOneStep(elevator);
-
-        if (Elevator_HasAnyRequest(elevator))
-        {
-            ClearConsole();
-            Elevator_PrintCompactVisualPanel(elevator);
-        }
-    }
-
-    Elevator_RunUntilIdle(elevator);
-    ClearConsole();
-    Elevator_PrintCompactVisualPanel(elevator);
 }
 
 int main(void)
@@ -320,10 +245,10 @@ int main(void)
             Elevator_PrintCompactVisualPanel(&elevator);
             break;
         case 29:
-            RunUntilIdleWithCompactPanel(&elevator);
+            Elevator_RunUntilIdleWithCompactPanel(&elevator);
             break;
         case 30:
-            RunUntilIdleWithRefreshedCompactPanel(&elevator);
+            Elevator_RunUntilIdleWithRefreshedCompactPanel(&elevator);
             break;
         default:
             printf("Unknown menu option.\n");
