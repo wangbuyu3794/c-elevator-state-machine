@@ -18,6 +18,16 @@ run.bat < scenarios\01_single_car_request.txt
 The scripts are not full automatic tests yet. They are teaching-friendly
 verification scenarios: run them, read the log, and check the expected behavior.
 
+To run all scenarios at once from the project root:
+
+```cmd
+run_scenarios.bat
+```
+
+The batch script builds the program, runs every `.txt` scenario in this folder,
+and writes logs to a temporary directory. It checks whether each scenario process
+finishes successfully, but it does not compare log contents yet.
+
 ## 01_single_car_request.txt
 
 Purpose:

@@ -66,6 +66,9 @@ c-elevator-state-machine/
 │   ├── 04_door_blocked_reopen.txt
 │   ├── 05_backup_power_rescue.txt
 │   └── 06_emergency_call_blocks_run.txt
+├── build.bat
+├── run.bat
+├── run_scenarios.bat
 ├── README.md
 └── .gitignore
 ```
@@ -112,6 +115,7 @@ c-elevator-state-machine/
 | V5.6 | 进行中 | 拆分终端调试运行辅助模块 |
 | V5.7 | 进行中 | 新增手动验证场景和输入脚本 |
 | V5.8 | 进行中 | 优化无方向状态下的目标选择优先级 |
+| V5.9 | 进行中 | 新增一键运行全部验证场景的脚本 |
 
 后续计划：
 
@@ -587,6 +591,26 @@ V5.8 暂不实现：
 - 请求老化和公平性权重；
 - 多电梯调度。
 
+## V5.9 功能
+
+当前版本把手动验证流程整理成一键脚本。
+
+已支持：
+
+- 新增 `run_scenarios.bat`；
+- 自动编译当前项目；
+- 自动依次运行 `scenarios/` 下的所有 `.txt` 输入场景；
+- 每个场景的输出日志写入 Windows 临时目录；
+- 命令行中显示每个场景的运行结果和最终汇总；
+- 不把验证日志写入项目目录，避免污染 Git 工作区。
+
+V5.9 暂不实现：
+
+- 自动比对日志内容；
+- 自动断言某个状态必须出现；
+- CI 流程；
+- 第三方测试框架。
+
 ## V4.7 功能
 
 当前版本加入了基础候机策略。
@@ -950,6 +974,15 @@ run.bat < scenarios\01_single_car_request.txt
 ```cmd
 type scenarios\README.md
 ```
+
+也可以一键运行所有场景：
+
+```cmd
+run_scenarios.bat
+```
+
+该脚本会把每个场景的输出日志保存到 Windows 临时目录。
+当前它只判断程序是否能正常跑完，不做日志内容自动断言。
 
 ## 菜单说明
 
