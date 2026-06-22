@@ -93,6 +93,7 @@ c-elevator-state-machine/
 | V5 Prep 2 | 进行中 | 统一命令行菜单和未来 GUI 的按钮事件入口 |
 | V5 Prep 3 | 进行中 | 为请求类按钮事件增加可解释的结果码 |
 | V5 Prep 4 | 进行中 | 为内部门控和紧急呼叫按钮增加事件结果码 |
+| V5 Prep 5 | 进行中 | 为管理、电源、故障和安全控制增加事件结果码 |
 
 后续计划：
 
@@ -354,6 +355,36 @@ V5 Prep 4 暂不覆盖：
 - 主电源关闭和恢复；
 - 故障设置与清除；
 - 备用电源救援。
+
+V5 Prep 5 继续把管理和电源类操作纳入统一事件结果模型。
+
+当前以下操作也会返回 `ElevatorEventResult`：
+
+- `Elevator_SetLoad`；
+- `Elevator_SetDoorBlocked`；
+- `Elevator_SetFault`；
+- `Elevator_ClearFault`；
+- `Elevator_AdminPause`；
+- `Elevator_AdminResume`；
+- `Elevator_PowerOff`；
+- `Elevator_RestorePower`；
+- `Elevator_SimulatePowerFailure`；
+- `Elevator_SetBackupPowerAvailable`；
+- `Elevator_RunBackupRescue`；
+- `Elevator_SetBetweenFloors`；
+- `Elevator_RunRecovery`。
+
+新增结果码：
+
+- `ELEVATOR_EVENT_ALREADY_ACTIVE`：操作目标已经处于对应状态；
+- `ELEVATOR_EVENT_NO_RECOVERY_NEEDED`：当前不需要恢复或救援；
+- `ELEVATOR_EVENT_BACKUP_POWER_UNAVAILABLE`：备用电源不可用；
+- `ELEVATOR_EVENT_NOT_BETWEEN_FLOORS`：电梯并不处于楼层之间；
+- `ELEVATOR_EVENT_INVALID_FAULT`：故障类型不合法；
+- `ELEVATOR_EVENT_RECOVERY_BLOCKED`：恢复流程完成后仍有安全条件阻止运行。
+
+至此，命令行菜单中的主要控制操作都会打印事件结果。
+未来 GUI 可以统一使用返回值判断按钮操作是否成功，以及失败原因。
 
 ## V4.7 功能
 

@@ -272,15 +272,16 @@ ElevatorEventResult Elevator_PressDoorCloseButton(Elevator *elevator)
     return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked)
+ElevatorEventResult Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isDoorBlocked = isBlocked ? 1 : 0;
     printf("[Safety] Door blocked: %s.\n", elevator->isDoorBlocked ? "yes" : "no");
 
     Elevator_UpdateSafetyState(elevator);
+    return ELEVATOR_EVENT_OK;
 }

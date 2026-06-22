@@ -143,11 +143,11 @@ ElevatorEventResult Elevator_ClearEmergencyCall(Elevator *elevator)
     return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_SetLoad(Elevator *elevator, int loadKg)
+ElevatorEventResult Elevator_SetLoad(Elevator *elevator, int loadKg)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (loadKg < 0)
@@ -169,13 +169,20 @@ void Elevator_SetLoad(Elevator *elevator, int loadKg)
     }
 
     Elevator_UpdateSafetyState(elevator);
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_SetFault(Elevator *elevator, FaultType fault)
+ElevatorEventResult Elevator_SetFault(Elevator *elevator, FaultType fault)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
+    }
+
+    if (fault < FAULT_NONE || fault > FAULT_UNKNOWN)
+    {
+        printf("[Fault] Invalid fault type.\n");
+        return ELEVATOR_EVENT_INVALID_FAULT;
     }
 
     elevator->fault = fault;
@@ -183,38 +190,41 @@ void Elevator_SetFault(Elevator *elevator, FaultType fault)
     {
         printf("[Fault] Fault cleared.\n");
         Elevator_UpdateSafetyState(elevator);
-        return;
+        return ELEVATOR_EVENT_OK;
     }
 
     printf("[Fault] Elevator entered fault state: %s.\n", Elevator_GetFaultName(fault));
     Elevator_UpdateSafetyState(elevator);
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_ClearFault(Elevator *elevator)
+ElevatorEventResult Elevator_ClearFault(Elevator *elevator)
 {
-    Elevator_SetFault(elevator, FAULT_NONE);
+    return Elevator_SetFault(elevator, FAULT_NONE);
 }
 
-void Elevator_AdminPause(Elevator *elevator)
+ElevatorEventResult Elevator_AdminPause(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isAdminPaused = 1;
     Elevator_UpdateSafetyState(elevator);
     printf("[Admin] Elevator paused by administrator.\n");
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_AdminResume(Elevator *elevator)
+ElevatorEventResult Elevator_AdminResume(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isAdminPaused = 0;
     Elevator_UpdateSafetyState(elevator);
     printf("[Admin] Elevator resumed by administrator.\n");
+    return ELEVATOR_EVENT_OK;
 }

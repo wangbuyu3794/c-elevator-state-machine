@@ -65,7 +65,13 @@ typedef enum
     ELEVATOR_EVENT_REQUEST_EXISTS = -2,
     ELEVATOR_EVENT_POWER_OFF = -3,
     ELEVATOR_EVENT_DOOR_NOT_ALIGNED = -4,
-    ELEVATOR_EVENT_DOOR_CLOSE_BLOCKED = -5
+    ELEVATOR_EVENT_DOOR_CLOSE_BLOCKED = -5,
+    ELEVATOR_EVENT_ALREADY_ACTIVE = -6,
+    ELEVATOR_EVENT_NO_RECOVERY_NEEDED = -7,
+    ELEVATOR_EVENT_BACKUP_POWER_UNAVAILABLE = -8,
+    ELEVATOR_EVENT_NOT_BETWEEN_FLOORS = -9,
+    ELEVATOR_EVENT_INVALID_FAULT = -10,
+    ELEVATOR_EVENT_RECOVERY_BLOCKED = -11
 } ElevatorEventResult;
 
 typedef struct
@@ -207,19 +213,19 @@ ElevatorEventResult Elevator_PressDoorCloseButton(Elevator *elevator);
 ElevatorEventResult Elevator_PressEmergencyCallButton(Elevator *elevator);
 ElevatorEventResult Elevator_ClearEmergencyCall(Elevator *elevator);
 
-void Elevator_SetLoad(Elevator *elevator, int loadKg);
-void Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked);
-void Elevator_SetFault(Elevator *elevator, FaultType fault);
-void Elevator_ClearFault(Elevator *elevator);
-void Elevator_AdminPause(Elevator *elevator);
-void Elevator_AdminResume(Elevator *elevator);
-void Elevator_PowerOff(Elevator *elevator);
-void Elevator_RestorePower(Elevator *elevator);
-void Elevator_SimulatePowerFailure(Elevator *elevator);
-void Elevator_RunBackupRescue(Elevator *elevator);
-void Elevator_SetBackupPowerAvailable(Elevator *elevator, int isAvailable);
-void Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor);
-void Elevator_RunRecovery(Elevator *elevator);
+ElevatorEventResult Elevator_SetLoad(Elevator *elevator, int loadKg);
+ElevatorEventResult Elevator_SetDoorBlocked(Elevator *elevator, int isBlocked);
+ElevatorEventResult Elevator_SetFault(Elevator *elevator, FaultType fault);
+ElevatorEventResult Elevator_ClearFault(Elevator *elevator);
+ElevatorEventResult Elevator_AdminPause(Elevator *elevator);
+ElevatorEventResult Elevator_AdminResume(Elevator *elevator);
+ElevatorEventResult Elevator_PowerOff(Elevator *elevator);
+ElevatorEventResult Elevator_RestorePower(Elevator *elevator);
+ElevatorEventResult Elevator_SimulatePowerFailure(Elevator *elevator);
+ElevatorEventResult Elevator_RunBackupRescue(Elevator *elevator);
+ElevatorEventResult Elevator_SetBackupPowerAvailable(Elevator *elevator, int isAvailable);
+ElevatorEventResult Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor);
+ElevatorEventResult Elevator_RunRecovery(Elevator *elevator);
 
 void Elevator_PrintStatus(const Elevator *elevator);
 void Elevator_PrintRequests(const Elevator *elevator);

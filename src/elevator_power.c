@@ -31,11 +31,11 @@ static int Elevator_GetNextFloorInDirection(int floor, ElevatorDirection directi
     return nextFloor;
 }
 
-void Elevator_PowerOff(Elevator *elevator)
+ElevatorEventResult Elevator_PowerOff(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isMainPowerOn = 0;
@@ -47,19 +47,20 @@ void Elevator_PowerOff(Elevator *elevator)
     elevator->targetFloor = NO_TARGET_FLOOR;
     Elevator_UpdateSafetyState(elevator);
     printf("[Power] Main power switched off by operator.\n");
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_RestorePower(Elevator *elevator)
+ElevatorEventResult Elevator_RestorePower(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (elevator->isMainPowerOn && !elevator->isPowerOff)
     {
         printf("[Power] Power is already on.\n");
-        return;
+        return ELEVATOR_EVENT_ALREADY_ACTIVE;
     }
 
     elevator->isMainPowerOn = 1;
@@ -71,25 +72,27 @@ void Elevator_RestorePower(Elevator *elevator)
     elevator->targetFloor = NO_TARGET_FLOOR;
     printf("[Power] Power restored. Starting safety recovery.\n");
     Elevator_RunRecovery(elevator);
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_SetBackupPowerAvailable(Elevator *elevator, int isAvailable)
+ElevatorEventResult Elevator_SetBackupPowerAvailable(Elevator *elevator, int isAvailable)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     elevator->isBackupPowerAvailable = isAvailable ? 1 : 0;
     printf("[Power] Backup power available: %s.\n",
            elevator->isBackupPowerAvailable ? "yes" : "no");
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_SimulatePowerFailure(Elevator *elevator)
+ElevatorEventResult Elevator_SimulatePowerFailure(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (elevator->direction == DIRECTION_NONE && elevator->targetFloor != NO_TARGET_FLOOR)
@@ -127,37 +130,39 @@ void Elevator_SimulatePowerFailure(Elevator *elevator)
             printf("[Power] Backup power unavailable. Elevator is waiting for external rescue.\n");
         }
     }
+
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_RunBackupRescue(Elevator *elevator)
+ElevatorEventResult Elevator_RunBackupRescue(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (!elevator->isPowerFailure)
     {
         printf("[Backup] No power failure rescue is needed now.\n");
-        return;
+        return ELEVATOR_EVENT_NO_RECOVERY_NEEDED;
     }
 
     if (!elevator->isBetweenFloors)
     {
         printf("[Backup] Elevator is already aligned with a floor.\n");
-        return;
+        return ELEVATOR_EVENT_NOT_BETWEEN_FLOORS;
     }
 
     if (!elevator->isBackupPowerAvailable)
     {
         printf("[Backup] Backup power is unavailable.\n");
-        return;
+        return ELEVATOR_EVENT_BACKUP_POWER_UNAVAILABLE;
     }
 
     if (!Elevator_IsValidFloor(elevator->rescueFloor))
     {
         printf("[Backup] Rescue floor %d is invalid.\n", elevator->rescueFloor);
-        return;
+        return ELEVATOR_EVENT_INVALID_FLOOR;
     }
 
     elevator->isBackupPowerActive = 1;
@@ -186,19 +191,20 @@ void Elevator_RunBackupRescue(Elevator *elevator)
     elevator->direction = DIRECTION_NONE;
     elevator->targetFloor = NO_TARGET_FLOOR;
     printf("[Backup] Passengers can leave. Elevator waits here until main power is restored.\n");
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor)
+ElevatorEventResult Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (!Elevator_IsValidFloor(safeFloor))
     {
         printf("[Recovery] Safe floor %d is invalid.\n", safeFloor);
-        return;
+        return ELEVATOR_EVENT_INVALID_FLOOR;
     }
 
     elevator->isBetweenFloors = 1;
@@ -207,25 +213,26 @@ void Elevator_SetBetweenFloors(Elevator *elevator, int safeFloor)
     elevator->rescueFloor = safeFloor;
     printf("[Recovery] Elevator is now simulated between floors. Nearest safe floor: %d.\n",
            safeFloor);
+    return ELEVATOR_EVENT_OK;
 }
 
-void Elevator_RunRecovery(Elevator *elevator)
+ElevatorEventResult Elevator_RunRecovery(Elevator *elevator)
 {
     if (elevator == NULL)
     {
-        return;
+        return ELEVATOR_EVENT_NULL_ELEVATOR;
     }
 
     if (elevator->isPowerOff)
     {
         printf("[Recovery] Cannot recover while power is off.\n");
-        return;
+        return ELEVATOR_EVENT_POWER_OFF;
     }
 
     if (!elevator->isRecovering && !elevator->isBetweenFloors)
     {
         printf("[Recovery] No recovery is needed now.\n");
-        return;
+        return ELEVATOR_EVENT_NO_RECOVERY_NEEDED;
     }
 
     elevator->isRecovering = 1;
@@ -263,9 +270,11 @@ void Elevator_RunRecovery(Elevator *elevator)
     if (Elevator_CanMove(elevator))
     {
         printf("[Recovery] Safety recovery finished. Elevator can return to normal scheduling.\n");
+        return ELEVATOR_EVENT_OK;
     }
     else
     {
         printf("[Recovery] Recovery finished, but another safety condition still blocks movement.\n");
+        return ELEVATOR_EVENT_RECOVERY_BLOCKED;
     }
 }

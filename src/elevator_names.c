@@ -92,6 +92,18 @@ const char *Elevator_GetEventResultName(ElevatorEventResult result)
         return "Door is not aligned with floor";
     case ELEVATOR_EVENT_DOOR_CLOSE_BLOCKED:
         return "Door close blocked";
+    case ELEVATOR_EVENT_ALREADY_ACTIVE:
+        return "Already active";
+    case ELEVATOR_EVENT_NO_RECOVERY_NEEDED:
+        return "No recovery needed";
+    case ELEVATOR_EVENT_BACKUP_POWER_UNAVAILABLE:
+        return "Backup power unavailable";
+    case ELEVATOR_EVENT_NOT_BETWEEN_FLOORS:
+        return "Not between floors";
+    case ELEVATOR_EVENT_INVALID_FAULT:
+        return "Invalid fault";
+    case ELEVATOR_EVENT_RECOVERY_BLOCKED:
+        return "Recovery blocked";
     default:
         return "Unknown event result";
     }

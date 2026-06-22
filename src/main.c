@@ -93,7 +93,8 @@ int main(void)
                 printf("Invalid load input. Program stopped.\n");
                 return 1;
             }
-            Elevator_SetLoad(&elevator, loadKg);
+            eventResult = Elevator_SetLoad(&elevator, loadKg);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 6:
             printf("Door blocked? 1 = yes, 0 = no: ");
@@ -102,7 +103,8 @@ int main(void)
                 printf("Invalid door blocked input. Program stopped.\n");
                 return 1;
             }
-            Elevator_SetDoorBlocked(&elevator, isBlocked);
+            eventResult = Elevator_SetDoorBlocked(&elevator, isBlocked);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 7:
             printf("Fault type: 1 = door, 2 = motor, 3 = sensor, 4 = unknown: ");
@@ -114,36 +116,43 @@ int main(void)
             switch (faultChoice)
             {
             case 1:
-                Elevator_SetFault(&elevator, FAULT_DOOR);
+                eventResult = Elevator_SetFault(&elevator, FAULT_DOOR);
                 break;
             case 2:
-                Elevator_SetFault(&elevator, FAULT_MOTOR);
+                eventResult = Elevator_SetFault(&elevator, FAULT_MOTOR);
                 break;
             case 3:
-                Elevator_SetFault(&elevator, FAULT_SENSOR);
+                eventResult = Elevator_SetFault(&elevator, FAULT_SENSOR);
                 break;
             case 4:
-                Elevator_SetFault(&elevator, FAULT_UNKNOWN);
+                eventResult = Elevator_SetFault(&elevator, FAULT_UNKNOWN);
                 break;
             default:
                 printf("Unknown fault type.\n");
+                eventResult = ELEVATOR_EVENT_INVALID_FAULT;
                 break;
             }
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 8:
-            Elevator_ClearFault(&elevator);
+            eventResult = Elevator_ClearFault(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 9:
-            Elevator_AdminPause(&elevator);
+            eventResult = Elevator_AdminPause(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 10:
-            Elevator_AdminResume(&elevator);
+            eventResult = Elevator_AdminResume(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 11:
-            Elevator_PowerOff(&elevator);
+            eventResult = Elevator_PowerOff(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 12:
-            Elevator_RestorePower(&elevator);
+            eventResult = Elevator_RestorePower(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 13:
             printf("Enter nearest safe floor (-1 or 1-34): ");
@@ -152,10 +161,12 @@ int main(void)
                 printf("Invalid safe floor input. Program stopped.\n");
                 return 1;
             }
-            Elevator_SetBetweenFloors(&elevator, safeFloor);
+            eventResult = Elevator_SetBetweenFloors(&elevator, safeFloor);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 14:
-            Elevator_RunRecovery(&elevator);
+            eventResult = Elevator_RunRecovery(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 15:
             Elevator_PrintStats(&elevator);
@@ -181,7 +192,8 @@ int main(void)
             printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 18:
-            Elevator_SimulatePowerFailure(&elevator);
+            eventResult = Elevator_SimulatePowerFailure(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 19:
             printf("Backup power available? 1 = yes, 0 = no: ");
@@ -190,10 +202,12 @@ int main(void)
                 printf("Invalid backup power input. Program stopped.\n");
                 return 1;
             }
-            Elevator_SetBackupPowerAvailable(&elevator, isAvailable);
+            eventResult = Elevator_SetBackupPowerAvailable(&elevator, isAvailable);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 20:
-            Elevator_RunBackupRescue(&elevator);
+            eventResult = Elevator_RunBackupRescue(&elevator);
+            printf("Event result: %s\n", Elevator_GetEventResultName(eventResult));
             break;
         case 21:
             eventResult = Elevator_PressDoorOpenButton(&elevator);
