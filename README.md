@@ -67,8 +67,11 @@ c-elevator-state-machine/
 │   ├── 05_backup_power_rescue.txt
 │   └── 06_emergency_call_blocks_run.txt
 ├── build.bat
+├── gui.bat
 ├── run.bat
 ├── run_scenarios.bat
+├── ui/
+│   └── elevator_web.py
 ├── README.md
 └── .gitignore
 ```
@@ -116,6 +119,7 @@ c-elevator-state-machine/
 | V5.7 | 进行中 | 新增手动验证场景和输入脚本 |
 | V5.8 | 进行中 | 优化无方向状态下的目标选择优先级 |
 | V5.9 | 进行中 | 新增一键运行全部验证场景的脚本 |
+| V6.0 | 进行中 | 新增 Python Web 图形界面原型 |
 
 后续计划：
 
@@ -611,6 +615,30 @@ V5.9 暂不实现：
 - CI 流程；
 - 第三方测试框架。
 
+## V6.0 功能
+
+当前版本新增一个 Python Web 图形界面原型，用来结束第一阶段的可视化目标。
+
+已支持：
+
+- 新增 `gui.bat`；
+- 使用 `gcc -shared` 把 C 电梯核心编译成 Windows DLL；
+- 新增 `ui/elevator_web.py`；
+- Python 使用 `ctypes` 调用 C 电梯核心；
+- 使用 Python 内置 HTTP 服务和浏览器显示外部楼层按钮、电梯井、内部楼层按钮和安全控制按钮；
+- UI 通过公开事件 API 操作电梯；
+- UI 通过 `Elevator_GetSnapshot` 读取状态；
+- 支持运行一步、自动运行、内部楼层按钮、外部上下行按钮、开门保持、关门、紧急呼叫、管理员暂停、停电、备用电源救援、恢复供电等基础操作；
+- 显示当前楼层、目标楼层、状态、方向、门状态、门锁、电源、安全状态和请求灯。
+
+V6.0 暂不实现：
+
+- 商业级界面美化；
+- 多窗口；
+- 动画电梯移动；
+- 自动日志断言；
+- 打包成独立安装程序。
+
 ## V4.7 功能
 
 当前版本加入了基础候机策略。
@@ -952,6 +980,29 @@ run.bat
 ```cmd
 type %TEMP%\c_elevator_state_machine_path.txt
 ```
+
+## 图形界面运行方式
+
+项目提供了一个 Python Web 图形界面原型。
+
+在项目根目录执行：
+
+```cmd
+gui.bat
+```
+
+脚本会先把 C 核心编译成 DLL，然后启动 Python 本地 Web 图形界面。
+浏览器会自动打开：
+
+```text
+http://127.0.0.1:8765
+```
+
+这个界面的定位是教学和验证用原型：
+
+- C 继续负责电梯状态机和安全逻辑；
+- Python 负责提供本地 Web 界面；
+- Python 不直接修改电梯内部字段，而是通过公开事件 API 操作电梯。
 
 ## 场景验证
 

@@ -2,5 +2,6 @@
 *.obj
 *.o
 *.out
+*.dll
 build/
 .vscode/
