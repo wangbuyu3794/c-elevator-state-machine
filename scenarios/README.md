@@ -1,112 +1,93 @@
-# Manual Verification Scenarios
+# 验证场景
 
-This folder contains repeatable input scripts for the command-line elevator
-program.
+本目录保存可重复运行的命令行输入脚本，用于验证电梯状态机的主要行为。
 
-Before running a scenario, build the program from the project root:
+## 运行方式
+
+在项目根目录先编译：
 
 ```cmd
 build.bat
 ```
 
-Then run one scenario:
+运行单个场景：
 
 ```cmd
 run.bat < scenarios\01_single_car_request.txt
 ```
 
-The scripts are not full automatic tests yet. They are teaching-friendly
-verification scenarios: run them, read the log, and check the expected behavior.
-
-To run all scenarios at once from the project root:
+运行全部场景：
 
 ```cmd
 run_scenarios.bat
 ```
 
-The batch script builds the program, runs every `.txt` scenario in this folder,
-and writes logs to a temporary directory. It checks whether each scenario process
-finishes successfully, but it does not compare log contents yet.
+`run_scenarios.bat` 会自动编译程序，依次执行本目录下的 `.txt` 场景，并将日志写入 Windows 临时目录。
 
-## 01_single_car_request.txt
+## 场景列表
 
-Purpose:
+### 01_single_car_request.txt
 
-- Verify a basic car floor request.
-- Verify movement, arrival, door open, door hold, door close, and final idle.
+验证内部楼层按钮请求。
 
-Expected observations:
+观察点：
 
-- A car request for floor `5` is accepted.
-- The elevator moves upward from floor `1` to floor `5`.
-- The request is cleared after service.
-- The final compact panel shows no target and no active request.
+- 5 楼内部请求被接受；
+- 电梯从 1 楼上行到 5 楼；
+- 到达后完成开门、停留、关门流程；
+- 请求完成后电梯回到空闲状态。
 
-## 02_multiple_direction_requests.txt
+### 02_multiple_direction_requests.txt
 
-Purpose:
+验证多方向请求调度。
 
-- Verify multiple pending requests.
-- Observe direction-aware scheduling.
+观察点：
 
-Expected observations:
+- 6 楼上行请求被接受；
+- 8 楼内部请求被接受；
+- 3 楼下行请求被接受；
+- 电梯从 1 楼出发时优先处理上行任务；
+- 电梯上行途中服务 6 楼上行请求；
+- 3 楼下行请求等待电梯反向后再处理。
 
-- A hall up request at floor `6` is accepted.
-- A car request for floor `8` is accepted.
-- A hall down request at floor `3` is accepted.
-- From floor `1`, the elevator should choose an upward task first.
-- The elevator should serve the `6` floor hall up request on the way to the `8` floor car request.
-- The `3` floor hall down request should wait until the elevator reverses direction.
-- The final statistics should show completed requests.
+### 03_overload_blocks_run.txt
 
-## 03_overload_blocks_run.txt
+验证超重保护。
 
-Purpose:
+观察点：
 
-- Verify that overload is treated as a safety condition.
+- 当前载重设置为 1200kg；
+- 电梯在超重状态下拒绝普通运行；
+- 载重恢复到 500kg 后可以继续运行。
 
-Expected observations:
+### 04_door_blocked_reopen.txt
 
-- Load is set to `1200` kg.
-- The elevator should refuse normal movement while overloaded.
-- The visual run should stop with a safety message.
-- After load is reset to `500` kg, the elevator can continue.
+验证门阻挡保护。
 
-## 04_door_blocked_reopen.txt
+观察点：
 
-Purpose:
+- 门阻挡状态被设置；
+- 电梯尝试关门时被安全条件阻止；
+- 门阻挡解除后可以继续完成流程。
 
-- Verify door blocked handling.
+### 05_backup_power_rescue.txt
 
-Expected observations:
+验证突然停电和备用电源救援。
 
-- Door blocked is set before a request is served.
-- When the elevator tries to close the door, the blocked state should force a
-  safe response instead of normal movement completion.
-- After clearing the blocked state, the elevator can continue.
+观察点：
 
-## 05_backup_power_rescue.txt
+- 电梯开始向 24 楼运行；
+- 模拟突然停电；
+- 电梯被标记为停在两层之间；
+- 备用电源可用；
+- 备用救援将电梯移动到安全楼层并开门。
 
-Purpose:
+### 06_emergency_call_blocks_run.txt
 
-- Verify sudden power failure and backup power rescue.
+验证紧急呼叫优先级。
 
-Expected observations:
+观察点：
 
-- The elevator starts moving toward floor `24`.
-- A sudden power failure is simulated.
-- The elevator is marked as between floors before backup rescue.
-- Backup power is available.
-- Backup rescue moves the elevator to a safe rescue floor and opens the doors.
-
-## 06_emergency_call_blocks_run.txt
-
-Purpose:
-
-- Verify emergency call priority.
-
-Expected observations:
-
-- Emergency call is activated before normal movement.
-- Normal movement should be blocked while emergency call is active.
-- After clearing emergency call, the elevator can continue processing requests.
+- 紧急呼叫被触发；
+- 普通运行被阻止；
+- 清除紧急呼叫后，电梯继续处理原有请求。
