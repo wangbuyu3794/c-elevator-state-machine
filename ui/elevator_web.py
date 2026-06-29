@@ -16,6 +16,41 @@ ELEVATOR_EVENT_OK = 1
 
 IntArray = ctypes.c_int * TOTAL_FLOOR_COUNT
 
+NAME_ZH = {
+    "Idle": "空闲",
+    "Moving": "运行中",
+    "Door opening": "开门中",
+    "Door holding": "开门保持",
+    "Door closing": "关门中",
+    "Fault": "故障",
+    "Paused": "管理员暂停",
+    "Power off": "断电",
+    "Recovering": "恢复中",
+    "None": "无",
+    "Up": "上行",
+    "Down": "下行",
+    "Open": "打开",
+    "Closed": "关闭",
+    "Door fault": "门故障",
+    "Motor fault": "电机故障",
+    "Sensor fault": "传感器故障",
+    "Unknown fault": "未知故障",
+    "Invalid fault": "无效故障",
+    "OK": "成功",
+    "Null elevator": "电梯对象为空",
+    "Invalid floor": "楼层无效",
+    "Request already exists": "请求已存在",
+    "Power is off": "电源已关闭",
+    "Door is not aligned with floor": "电梯未对齐楼层",
+    "Door close blocked": "安全条件阻止关门",
+    "Already active": "已经处于该状态",
+    "No recovery needed": "当前不需要恢复",
+    "Backup power unavailable": "备用电源不可用",
+    "Not between floors": "电梯不在两层之间",
+    "Recovery blocked": "恢复被安全条件阻止",
+    "Unknown event result": "未知事件结果",
+}
+
 
 class Elevator(ctypes.Structure):
     _fields_ = [
@@ -179,7 +214,8 @@ class ElevatorBridge:
 
     def c_name(self, func, value):
         result = func(value)
-        return result.decode("utf-8") if result else "Unknown"
+        name = result.decode("utf-8") if result else "Unknown"
+        return NAME_ZH.get(name, name)
 
     def snapshot(self):
         with self.lock:
@@ -251,12 +287,12 @@ class ElevatorBridge:
     def run_step(self):
         with self.lock:
             self.lib.Elevator_RunOneStep(ctypes.byref(self.elevator))
-        return {"ok": True, "message": "Step complete.", "snapshot": self.snapshot()}
+        return {"ok": True, "message": "运行一步完成。", "snapshot": self.snapshot()}
 
     def reset(self):
         with self.lock:
             self.lib.Elevator_Init(ctypes.byref(self.elevator))
-        return {"ok": True, "message": "Elevator reset.", "snapshot": self.snapshot()}
+        return {"ok": True, "message": "电梯已重置。", "snapshot": self.snapshot()}
 
     def call_event(self, action, value=None):
         with self.lock:
@@ -304,16 +340,16 @@ class ElevatorBridge:
             elif action == "clear_fault":
                 result = self.lib.Elevator_ClearFault(e_ptr)
             else:
-                return {"ok": False, "message": "Unknown action.", "snapshot": self.snapshot()}
+                return {"ok": False, "message": "未知操作。", "snapshot": self.snapshot()}
         return self.event_result(result)
 
 
 HTML = r"""<!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>C Elevator State Machine</title>
+  <title>C 语言电梯状态机</title>
   <style>
     :root { --bg:#eef2f6; --panel:#fff; --ink:#17212b; --muted:#667085; --line:#d7dde5; --accent:#1f6aa5; --danger:#b42318; --ok:#067647; --warn:#b54708; }
     * { box-sizing: border-box; }
@@ -349,26 +385,26 @@ HTML = r"""<!doctype html>
   </style>
 </head>
 <body>
-  <header><h1>C Elevator State Machine</h1><div><button onclick="step()">Step</button> <button onclick="toggleAuto()" id="autoButton">Auto</button> <button onclick="eventCall('reset')">Reset</button></div></header>
+  <header><h1>C 语言电梯状态机</h1><div><button onclick="step()">运行一步</button> <button onclick="toggleAuto()" id="autoButton">自动运行</button> <button onclick="eventCall('reset')">重置</button></div></header>
   <main>
-    <section><h2>Hall Panel</h2><div id="hall"></div></section>
-    <section><h2>Status</h2><div class="status-grid" id="status"></div><h2 style="margin-top:12px;">Elevator Shaft</h2><div id="shaft"></div><div id="log"></div></section>
+    <section><h2>楼层外部按钮</h2><div id="hall"></div></section>
+    <section><h2>状态信息</h2><div class="status-grid" id="status"></div><h2 style="margin-top:12px;">电梯井</h2><div id="shaft"></div><div id="log"></div></section>
     <section>
-      <h2>Cabin Panel</h2><div class="cabin-grid" id="cabin"></div>
+      <h2>电梯内部按钮</h2><div class="cabin-grid" id="cabin"></div>
       <div class="controls">
-        <button onclick="eventCall('door_open_hold')">Open Hold</button><button onclick="eventCall('door_open_release')">Release Open</button>
-        <button onclick="eventCall('door_close')">Close Door</button><button onclick="eventCall('emergency')">Emergency</button>
-        <button onclick="eventCall('clear_emergency')" class="wide">Clear Emergency</button>
+        <button onclick="eventCall('door_open_hold')">按住开门</button><button onclick="eventCall('door_open_release')">松开开门</button>
+        <button onclick="eventCall('door_close')">关门</button><button onclick="eventCall('emergency')">紧急呼叫</button>
+        <button onclick="eventCall('clear_emergency')" class="wide">清除紧急呼叫</button>
       </div>
-      <h2 style="margin-top:16px;">Safety Controls</h2>
+      <h2 style="margin-top:16px;">安全与管理控制</h2>
       <div class="controls">
-        <div class="inline wide"><input id="load" type="number" value="0"><button onclick="eventCall('load', Number(document.getElementById('load').value))">Set Load</button></div>
-        <button onclick="eventCall('door_blocked', 1)">Door Blocked</button><button onclick="eventCall('door_blocked', 0)">Door Clear</button>
-        <button onclick="eventCall('admin_pause')">Admin Pause</button><button onclick="eventCall('admin_resume')">Admin Resume</button>
-        <button onclick="eventCall('power_failure')">Power Failure</button><button onclick="eventCall('backup_rescue')">Backup Rescue</button>
-        <button onclick="eventCall('restore_power')">Restore Power</button><button onclick="eventCall('recovery')">Run Recovery</button>
-        <div class="inline wide"><select id="fault"><option value="1">Door fault</option><option value="2">Motor fault</option><option value="3">Sensor fault</option><option value="4">Unknown fault</option></select><button onclick="eventCall('fault', Number(document.getElementById('fault').value))">Set Fault</button></div>
-        <button onclick="eventCall('clear_fault')" class="wide">Clear Fault</button>
+        <div class="inline wide"><input id="load" type="number" value="0"><button onclick="eventCall('load', Number(document.getElementById('load').value))">设置载重</button></div>
+        <button onclick="eventCall('door_blocked', 1)">门被阻挡</button><button onclick="eventCall('door_blocked', 0)">解除阻挡</button>
+        <button onclick="eventCall('admin_pause')">管理员暂停</button><button onclick="eventCall('admin_resume')">管理员恢复</button>
+        <button onclick="eventCall('power_failure')">模拟停电</button><button onclick="eventCall('backup_rescue')">备用救援</button>
+        <button onclick="eventCall('restore_power')">恢复供电</button><button onclick="eventCall('recovery')">安全恢复</button>
+        <div class="inline wide"><select id="fault"><option value="1">门故障</option><option value="2">电机故障</option><option value="3">传感器故障</option><option value="4">未知故障</option></select><button onclick="eventCall('fault', Number(document.getElementById('fault').value))">设置故障</button></div>
+        <button onclick="eventCall('clear_fault')" class="wide">清除故障</button>
       </div>
     </section>
   </main>
@@ -381,18 +417,18 @@ async function api(path, body){ const options = body === undefined ? {} : { meth
 async function refresh(){ latest = await api("/api/snapshot"); renderStatus(latest); renderHall(); renderShaft(latest); renderCabin(); }
 async function eventCall(action, value){ let result = action === "reset" ? await api("/api/reset", {}) : await api("/api/event", {action, value}); log(`${action}${value === undefined ? "" : " " + value}: ${result.message}`); latest = result.snapshot; renderStatus(latest); renderHall(); renderShaft(latest); renderCabin(); }
 async function step(){ const result = await api("/api/step", {}); log(result.message); latest = result.snapshot; renderStatus(latest); renderHall(); renderShaft(latest); renderCabin(); }
-function toggleAuto(){ const button=document.getElementById("autoButton"); if(autoTimer){ clearInterval(autoTimer); autoTimer=null; button.textContent="Auto"; log("Auto stopped."); return; } button.textContent="Stop"; log("Auto started."); autoTimer=setInterval(async()=>{ await step(); if(latest && !latest.hasAnyRequest && latest.state === "Idle"){ toggleAuto(); log("Auto finished."); } },450); }
+function toggleAuto(){ const button=document.getElementById("autoButton"); if(autoTimer){ clearInterval(autoTimer); autoTimer=null; button.textContent="自动运行"; log("自动运行已停止。"); return; } button.textContent="停止"; log("自动运行已开始。"); autoTimer=setInterval(async()=>{ await step(); if(latest && !latest.hasAnyRequest && latest.state === "空闲"){ toggleAuto(); log("自动运行已完成。"); } },450); }
 function metric(label,value,cls=""){ return `<div class="metric"><span>${label}</span><strong class="${cls}">${value}</strong></div>`; }
-function yn(value){ return value ? "Yes" : "No"; }
+function yn(value){ return value ? "是" : "否"; }
 function renderStatus(data){ document.getElementById("status").innerHTML = [
-metric("Current floor",data.currentFloor), metric("Target floor",data.targetFloor), metric("State",data.state), metric("Direction",data.direction),
-metric("Time",`${data.totalTimeSeconds}s`), metric("Load",`${data.currentLoadKg}kg`,data.isOverloaded?"bad":""), metric("Car door",data.carDoor), metric("Landing door",data.currentLandingDoor),
-metric("Door locked",yn(data.currentLandingDoorLocked),data.currentLandingDoorLocked?"good":"bad"), metric("Main power",yn(data.isMainPowerOn),data.isMainPowerOn?"good":"bad"), metric("Can move",yn(data.canMove),data.canMove?"good":"bad"), metric("Emergency",yn(data.isEmergencyCallActive),data.isEmergencyCallActive?"bad":""),
-metric("Completed",data.completedRequestCount), metric("Avg wait",`${data.averageWaitTimeSeconds}s`), metric("Longest wait",`${data.longestWaitTimeSeconds}s`), metric("Fault",data.fault,data.fault==="None"?"":"bad")].join(""); }
-function renderHall(){ document.getElementById("hall").innerHTML = floorList().map(floor => `<div class="hall-row"><div class="floor">${floor}</div><button ${floor>=34?"disabled":""} onclick="eventCall('hall_up', ${floor})">Up</button><button ${floor<1?"disabled":""} onclick="eventCall('hall_down', ${floor})">Down</button></div>`).join(""); }
+metric("当前楼层",data.currentFloor), metric("目标楼层",data.targetFloor), metric("状态",data.state), metric("方向",data.direction),
+metric("运行时间",`${data.totalTimeSeconds}秒`), metric("载重",`${data.currentLoadKg}kg`,data.isOverloaded?"bad":""), metric("轿厢门",data.carDoor), metric("当前层门",data.currentLandingDoor),
+metric("层门锁定",yn(data.currentLandingDoorLocked),data.currentLandingDoorLocked?"good":"bad"), metric("主电源",yn(data.isMainPowerOn),data.isMainPowerOn?"good":"bad"), metric("允许移动",yn(data.canMove),data.canMove?"good":"bad"), metric("紧急呼叫",yn(data.isEmergencyCallActive),data.isEmergencyCallActive?"bad":""),
+metric("已完成请求",data.completedRequestCount), metric("平均等待",`${data.averageWaitTimeSeconds}秒`), metric("最长等待",`${data.longestWaitTimeSeconds}秒`), metric("故障",data.fault,data.fault==="无"?"":"bad")].join(""); }
+function renderHall(){ document.getElementById("hall").innerHTML = floorList().map(floor => `<div class="hall-row"><div class="floor">${floor}</div><button ${floor>=34?"disabled":""} onclick="eventCall('hall_up', ${floor})">上行</button><button ${floor<1?"disabled":""} onclick="eventCall('hall_down', ${floor})">下行</button></div>`).join(""); }
 function renderCabin(){ const floors=[-1]; for(let i=1;i<=34;i++) floors.push(i); document.getElementById("cabin").innerHTML = floors.reverse().map(floor => `<button onclick="eventCall('car', ${floor})">${floor}</button>`).join(""); }
-function renderShaft(data){ document.getElementById("shaft").innerHTML = data.floors.map(row => { const requests=[row.hallUp?"U":"",row.hallDown?"D":"",row.car?"C":""].filter(Boolean).join(" "); const door=row.isCurrent ? `${row.landingDoorOpen?"Open":"Closed"}, ${row.landingDoorLocked?"Locked":"Unlocked"}` : ""; return `<div class="shaft-row ${row.isCurrent?"current":""}"><div class="floor">${row.floor}</div><div class="car">${row.isCurrent?"[E]":"| |"}</div><div class="requests">${requests}</div><div class="door">${door}</div></div>`; }).join(""); }
-refresh(); log("Web UI ready.");
+function renderShaft(data){ document.getElementById("shaft").innerHTML = data.floors.map(row => { const requests=[row.hallUp?"上":"",row.hallDown?"下":"",row.car?"内":""].filter(Boolean).join(" "); const door=row.isCurrent ? `${row.landingDoorOpen?"打开":"关闭"}, ${row.landingDoorLocked?"已锁":"未锁"}` : ""; return `<div class="shaft-row ${row.isCurrent?"current":""}"><div class="floor">${row.floor}</div><div class="car">${row.isCurrent?"[电梯]":"| |"}</div><div class="requests">${requests}</div><div class="door">${door}</div></div>`; }).join(""); }
+refresh(); log("中文界面已就绪。");
 </script>
 </body>
 </html>
@@ -448,11 +484,11 @@ def run_server(dll_path, self_test=False):
     ElevatorRequestHandler.bridge = ElevatorBridge(dll_path)
     if self_test:
         snapshot = ElevatorRequestHandler.bridge.snapshot()
-        print(f"Self-test OK: floor {snapshot['currentFloor']}, state {snapshot['state']}")
+        print(f"自检通过：当前楼层 {snapshot['currentFloor']}，状态 {snapshot['state']}")
         return 0
 
     url = f"http://{HOST}:{PORT}"
-    print(f"Elevator Web UI: {url}")
+    print(f"电梯 Web 界面：{url}")
     webbrowser.open(url)
     ThreadingHTTPServer((HOST, PORT), ElevatorRequestHandler).serve_forever()
     return 0
@@ -460,7 +496,7 @@ def run_server(dll_path, self_test=False):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python ui/elevator_web.py <path-to-elevator-dll> [--self-test]")
+        print("用法：python ui/elevator_web.py <path-to-elevator-dll> [--self-test]")
         return 1
     return run_server(sys.argv[1], "--self-test" in sys.argv[2:])
 
