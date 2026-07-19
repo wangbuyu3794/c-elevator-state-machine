@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and run scenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build
+        run: |
+          mkdir -p build
+          gcc -std=c11 -Wall -Wextra -Wpedantic -Werror -Iinclude \
+            src/main.c \
+            src/elevator.c \
+            src/elevator_request.c \
+            src/elevator_door.c \
+            src/elevator_power.c \
+            src/elevator_safety.c \
+            src/elevator_status.c \
+            src/elevator_names.c \
+            src/elevator_debug.c \
+            -o build/c_elevator_state_machine
+
+      - name: Run scenarios
+        run: |
+          mkdir -p build/scenario-logs
+          for scenario in scenarios/*.txt; do
+            name="$(basename "${scenario}" .txt)"
+            echo "[RUN] ${scenario}"
+            ./build/c_elevator_state_machine \
+              < "${scenario}" \
+              > "build/scenario-logs/${name}.log" 2>&1
+          done

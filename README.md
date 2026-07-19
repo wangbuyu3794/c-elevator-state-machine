@@ -1,5 +1,7 @@
 # C Elevator State Machine
 
+[![CI](https://github.com/wangbuyu3794/c-elevator-state-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/wangbuyu3794/c-elevator-state-machine/actions/workflows/ci.yml)
+
 一个使用 C 语言实现的单电梯状态机模拟系统，支持多类型楼层请求、方向调度、门控流程、安全保护、停电恢复、备用电源救援、运行统计和 Web 可视化界面。
 
 项目以单台电梯为控制对象，将电梯运行过程拆分为状态机、请求调度、门控、安全、电源恢复、状态输出和界面展示等模块。C 语言负责核心控制逻辑，Python Web 界面负责可视化展示和交互操作。
